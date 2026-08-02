@@ -22,7 +22,7 @@ type Props = {
   module: ModuleItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onEdit?: () => void;
+  onEdit?: (() => void) | undefined;
 };
 
 function parseNotesText(text: string): SlideNote[] {
