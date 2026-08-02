@@ -144,6 +144,10 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --brand: oklch(0.72 0.09 190);
+  --brand-foreground: oklch(0.16 0.03 195);
+  --highlight: oklch(0.78 0.145 72);
+  --highlight-foreground: oklch(0.2 0.04 60);
 }
 
 @layer base {
@@ -154,5 +158,17 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
   }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+}
+
+@utility surface-grid {
+  background-image:
+    radial-gradient(circle at 15% 10%, oklch(0.44 0.086 193 / 0.10), transparent 45%),
+    radial-gradient(circle at 85% 0%, oklch(0.78 0.145 72 / 0.14), transparent 40%);
 }
