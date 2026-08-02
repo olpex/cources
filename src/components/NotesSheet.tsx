@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { BookOpen, Loader2, ExternalLink } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpen, Loader2, ExternalLink, Pencil } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -15,30 +15,58 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchNotes, type PresentationMeta, type PresentationNotes } from "@/data/courses";
+import { fetchNotes, type SlideNote } from "@/data/courses";
+import type { ModuleItem } from "@/data/store";
 
 type Props = {
-  presentation: PresentationMeta | null;
+  module: ModuleItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
 };
 
-export function NotesSheet({ presentation, open, onOpenChange }: Props) {
-  const [notes, setNotes] = useState<PresentationNotes | null>(null);
+function parseNotesText(text: string): SlideNote[] {
+  return text
+    .split(/\n\s*—{2,}\s*\n|\n\s*-{3,}\s*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block, i) => {
+      const lines = block.split("\n");
+      const head = (lines[0] ?? "").trim();
+      const rest = lines.slice(1).join("\n").trim();
+      const paragraphs = (rest || head)
+        .split(/\n{2,}/)
+        .map((p) => p.trim())
+        .filter(Boolean);
+      return {
+        n: i + 1,
+        kind: rest ? head : `Блок ${i + 1}`,
+        paragraphs,
+        sources: "",
+      };
+    });
+}
+
+export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
+  const [builtin, setBuiltin] = useState<SlideNote[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
+  const custom = module?.notes;
+
   useEffect(() => {
-    if (!open || !presentation) return;
+    if (!open || !module) return;
+    setQuery("");
+    setError(null);
+    setBuiltin(null);
+    if (custom !== undefined || !module.builtinNotesId) return;
+
     let cancelled = false;
     setLoading(true);
-    setError(null);
-    setNotes(null);
-    setQuery("");
-    fetchNotes(presentation.id)
+    fetchNotes(module.builtinNotesId)
       .then((data) => {
-        if (!cancelled) setNotes(data);
+        if (!cancelled) setBuiltin(data.slides);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -49,39 +77,46 @@ export function NotesSheet({ presentation, open, onOpenChange }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [open, presentation]);
+  }, [open, module, custom]);
+
+  const all = useMemo<SlideNote[]>(() => {
+    if (custom !== undefined) return parseNotesText(custom);
+    return builtin ?? [];
+  }, [custom, builtin]);
 
   const term = query.trim().toLowerCase();
-  const slides =
-    notes?.slides.filter(
-      (s) =>
-        !term ||
-        s.kind.toLowerCase().includes(term) ||
-        String(s.n).includes(term) ||
-        s.paragraphs.some((p) => p.toLowerCase().includes(term)),
-    ) ?? [];
+  const slides = all.filter(
+    (s) =>
+      !term ||
+      s.kind.toLowerCase().includes(term) ||
+      String(s.n).includes(term) ||
+      s.paragraphs.some((p) => p.toLowerCase().includes(term)),
+  );
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl"
-      >
+      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
         <SheetHeader className="border-b border-border bg-secondary/60 p-6">
-          <SheetTitle className="pr-8 text-lg leading-snug">
-            {presentation?.title}
-          </SheetTitle>
+          <SheetTitle className="pr-8 text-lg leading-snug">{module?.title}</SheetTitle>
           <SheetDescription>
-            Нотатки викладача до презентації — {presentation?.slides} слайдів
+            Нотатки викладача{all.length ? ` — ${all.length} блоків` : ""}
           </SheetDescription>
-          {presentation && (
-            <Button asChild size="sm" variant="outline" className="mt-2 w-fit">
-              <a href={presentation.url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4" />
-                Відкрити презентацію
-              </a>
-            </Button>
-          )}
+          <div className="mt-2 flex flex-wrap gap-2">
+            {module?.url && (
+              <Button asChild size="sm" variant="outline">
+                <a href={module.url} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="size-4" />
+                  Відкрити презентацію
+                </a>
+              </Button>
+            )}
+            {onEdit && (
+              <Button size="sm" variant="outline" onClick={onEdit}>
+                <Pencil className="size-4" />
+                Редагувати нотатки
+              </Button>
+            )}
+          </div>
         </SheetHeader>
 
         <div className="border-b border-border p-4">
@@ -102,7 +137,9 @@ export function NotesSheet({ presentation, open, onOpenChange }: Props) {
           )}
           {error && <p className="py-10 text-center text-destructive">{error}</p>}
           {!loading && !error && slides.length === 0 && (
-            <p className="py-10 text-center text-muted-foreground">Нічого не знайдено.</p>
+            <p className="py-10 text-center text-muted-foreground">
+              {all.length === 0 ? "Нотаток ще немає — додайте їх у режимі редагування." : "Нічого не знайдено."}
+            </p>
           )}
 
           <Accordion type="multiple" className="space-y-2">
