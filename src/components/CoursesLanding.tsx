@@ -310,6 +310,16 @@ export function CoursesLanding() {
         }}
       />
 
+      <ImportDocDialog
+        open={importDialog !== null}
+        onOpenChange={(o) => !o && setImportDialog(null)}
+        courseId={importDialog?.course?.id}
+        defaultUrl={importDialog?.course?.sourceDocUrl}
+        onImported={(doc, url, courseId) => applyDoc(doc, url, courseId)}
+      />
+
+
+
       <ModuleDialog
         open={moduleDialog !== null}
         onOpenChange={(o) => !o && setModuleDialog(null)}
