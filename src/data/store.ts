@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/courses";
+import type { ParsedDoc, ParsedSlide } from "@/lib/gdocs-parse";
 
 export type ModuleItem = {
   id: string;
@@ -10,6 +11,10 @@ export type ModuleItem = {
   builtinNotesId?: string;
   /** custom notes text; overrides builtin notes when present */
   notes?: string;
+  /** structured notes imported from a Google Doc tab */
+  notesDoc?: ParsedSlide[];
+  /** Google Docs tab id this module was imported from */
+  sourceTabId?: string;
 };
 
 export type CourseItem = {
@@ -18,6 +23,9 @@ export type CourseItem = {
   subtitle: string;
   description: string;
   modules: ModuleItem[];
+  /** Google Doc this course was imported from */
+  sourceDocId?: string;
+  sourceDocUrl?: string;
 };
 
 const STORAGE_KEY = "lms-content-v1";
@@ -67,14 +75,61 @@ export function slidesToText(slides: SlideNote[]): string {
     .join("\n\n———\n\n");
 }
 
+export function docSlidesToText(slides: ParsedSlide[]): string {
+  return slides
+    .map((s) => {
+      const body = s.blocks
+        .map((b) => (b.type === "li" ? `${"  ".repeat(b.level ?? 0)}• ${b.text}` : b.text))
+        .join("\n\n");
+      return `${s.title}\n\n${body}`;
+    })
+    .join("\n\n———\n\n");
+}
+
 export async function builtinNotesText(id: string): Promise<string> {
   const data = await fetchNotes(id);
   return slidesToText(data.slides);
 }
 
+/** Merge a parsed Google Doc into an existing course (or build a new one). */
+function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): CourseItem {
+  const base: CourseItem = course ?? {
+    id: uid(),
+    title: doc.title,
+    subtitle: "",
+    description: "",
+    modules: [],
+  };
+
+  const existing = new Map(base.modules.filter((m) => m.sourceTabId).map((m) => [m.sourceTabId!, m]));
+  const imported: ModuleItem[] = doc.modules.map((m) => {
+    const prev = existing.get(m.tabId);
+    return {
+      ...(prev ?? { id: uid() }),
+      id: prev?.id ?? uid(),
+      title: m.title,
+      url: m.url || prev?.url || "",
+      slides: m.slides.length,
+      notesDoc: m.slides,
+      notes: undefined,
+      builtinNotesId: undefined,
+      sourceTabId: m.tabId,
+    };
+  });
+
+  const manual = base.modules.filter((m) => !m.sourceTabId);
+  return {
+    ...base,
+    modules: [...imported, ...manual],
+    sourceDocId: doc.docId,
+    sourceDocUrl: url,
+  };
+}
+
 export function useContent() {
   const [courses, setCourses] = useState<CourseItem[]>(seed);
   const [hydrated, setHydrated] = useState(false);
+  const [storageError, setStorageError] = useState<string | null>(null);
 
   useEffect(() => {
     setCourses(load());
@@ -83,7 +138,14 @@ export function useContent() {
 
   useEffect(() => {
     if (!hydrated) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
+      setStorageError(null);
+    } catch {
+      setStorageError(
+        "Забагато вмісту для збереження в браузері — останні зміни можуть не зберегтися після перезавантаження.",
+      );
+    }
   }, [courses, hydrated]);
 
   const addCourse = useCallback((data: Omit<CourseItem, "id" | "modules">) => {
@@ -130,17 +192,38 @@ export function useContent() {
     );
   }, []);
 
+  /** Create a course from a Google Doc, or refresh an existing one. */
+  const applyDoc = useCallback((doc: ParsedDoc, url: string, courseId?: string) => {
+    let resultId = courseId ?? "";
+    setCourses((prev) => {
+      const target =
+        prev.find((c) => c.id === courseId) ??
+        prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
+        null;
+      if (target) {
+        resultId = target.id;
+        return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
+      }
+      const created = mergeDoc(null, doc, url);
+      resultId = created.id;
+      return [...prev, created];
+    });
+    return resultId;
+  }, []);
+
   const resetAll = useCallback(() => setCourses(seed()), []);
 
   return {
     courses,
     hydrated,
+    storageError,
     addCourse,
     updateCourse,
     removeCourse,
     addModule,
     updateModule,
     removeModule,
+    applyDoc,
     resetAll,
   };
 }
