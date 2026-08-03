@@ -91,12 +91,20 @@ export function CoursesLanding() {
               </Button>
             ))}
             {edit && (
-              <Button variant="secondary" onClick={() => setCourseDialog({ course: null })}>
-                <Plus className="size-4" />
-                Додати курс
-              </Button>
+              <>
+                <Button variant="secondary" onClick={() => setCourseDialog({ course: null })}>
+                  <Plus className="size-4" />
+                  Додати курс
+                </Button>
+                <Button variant="secondary" onClick={() => setImportDialog({ course: null })}>
+                  <FileUp className="size-4" />
+                  Імпорт із Google Документа
+                </Button>
+              </>
             )}
           </div>
+          {storageError && <p className="mt-4 text-sm text-destructive">{storageError}</p>}
+
           <p className="mt-6 text-sm text-muted-foreground">
             Наразі доступно {total} модулів із нотатками викладача.
           </p>
