@@ -130,8 +130,17 @@ export function CoursesLanding() {
                 )}
               </div>
               {edit && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button
+                    size="sm"
+                    variant={course.sourceDocUrl ? "default" : "outline"}
+                    onClick={() => setImportDialog({ course })}
+                  >
+                    <RefreshCw className="size-4" />
+                    {course.sourceDocUrl ? "Оновити з документа" : "Прив’язати документ"}
+                  </Button>
+                  <Button
+
                     size="sm"
                     variant="outline"
                     onClick={() => setCourseDialog({ course })}
