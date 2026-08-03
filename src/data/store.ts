@@ -104,18 +104,17 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
   const existing = new Map(base.modules.filter((m) => m.sourceTabId).map((m) => [m.sourceTabId!, m]));
   const imported: ModuleItem[] = doc.modules.map((m) => {
     const prev = existing.get(m.tabId);
-    return {
-      ...(prev ?? { id: uid() }),
+    const next: ModuleItem = {
       id: prev?.id ?? uid(),
       title: m.title,
       url: m.url || prev?.url || "",
       slides: m.slides.length,
       notesDoc: m.slides,
-      notes: undefined,
-      builtinNotesId: undefined,
       sourceTabId: m.tabId,
     };
+    return next;
   });
+
 
   const manual = base.modules.filter((m) => !m.sourceTabId);
   return {
