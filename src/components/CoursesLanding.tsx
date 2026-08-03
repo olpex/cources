@@ -2,9 +2,11 @@ import { useState } from "react";
 import {
   ExternalLink,
   FileText,
+  FileUp,
   Pencil,
   Plus,
   Presentation,
+  RefreshCw,
   RotateCcw,
   Sparkles,
   Trash2,
@@ -26,6 +28,7 @@ import {
 import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
 import { ModuleDialog } from "@/components/ModuleDialog";
+import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
 
 type Confirm = { title: string; description: string; action: () => void } | null;
@@ -33,12 +36,14 @@ type Confirm = { title: string; description: string; action: () => void } | null
 export function CoursesLanding() {
   const {
     courses,
+    storageError,
     addCourse,
     updateCourse,
     removeCourse,
     addModule,
     updateModule,
     removeModule,
+    applyDoc,
     resetAll,
   } = useContent();
 
@@ -47,6 +52,7 @@ export function CoursesLanding() {
   const [notesOpen, setNotesOpen] = useState(false);
 
   const [courseDialog, setCourseDialog] = useState<{ course: CourseItem | null } | null>(null);
+  const [importDialog, setImportDialog] = useState<{ course: CourseItem | null } | null>(null);
   const [moduleDialog, setModuleDialog] = useState<{
     courseId: string;
     module: ModuleItem | null;
@@ -54,6 +60,7 @@ export function CoursesLanding() {
   const [confirm, setConfirm] = useState<Confirm>(null);
 
   const total = courses.reduce((n, c) => n + c.modules.length, 0);
+
 
   return (
     <main className="min-h-screen">
