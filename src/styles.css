@@ -158,7 +158,12 @@
   --brand-foreground: oklch(0.16 0.03 195);
   --highlight: oklch(0.78 0.145 72);
   --highlight-foreground: oklch(0.2 0.04 60);
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.21 0 0);
+  --paper-muted: oklch(0.45 0 0);
+  --paper-border: oklch(0.88 0 0);
 }
+
 
 @layer base {
   * {
