@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetchNotes, type SlideNote } from "@/data/courses";
+import { SlidePreview } from "@/components/SlidePreview";
 import type { NoteBlock } from "@/lib/gdocs-parse";
 import type { ModuleItem } from "@/data/store";
 
