@@ -95,6 +95,11 @@
   --brand-foreground: oklch(0.985 0.01 95);
   --highlight: oklch(0.78 0.145 72);
   --highlight-foreground: oklch(0.26 0.05 60);
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.21 0 0);
+  --paper-muted: oklch(0.45 0 0);
+  --paper-border: oklch(0.88 0 0);
+
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.905 0.014 190);
