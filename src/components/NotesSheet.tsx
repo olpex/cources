@@ -3,9 +3,42 @@ import { BookOpen, Loader2, ExternalLink, Pencil } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fetchNotes, type SlideNote } from "@/data/courses";
 import type { NoteBlock } from "@/lib/gdocs-parse";
 import type { ModuleItem } from "@/data/store";
+
+const FONTS = [
+  { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+  { label: "Roboto", value: '"Roboto", sans-serif' },
+  { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+  { label: "Calibri", value: "Calibri, Candara, Segoe UI, sans-serif" },
+  { label: "Open Sans", value: '"Open Sans", sans-serif' },
+  { label: "Tahoma", value: "Tahoma, Geneva, sans-serif" },
+];
+const SIZES = [12, 13, 14, 15, 16];
+const LINE_HEIGHTS = [1, 1.15, 1.5, 2];
+
+type Prefs = { font: string; size: number; lh: number };
+const PREFS_KEY = "notes-typography";
+const DEFAULT_PREFS: Prefs = { font: FONTS[0]!.value, size: 14, lh: 1.5 };
+
+function loadPrefs(): Prefs {
+  if (typeof window === "undefined") return DEFAULT_PREFS;
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) } : DEFAULT_PREFS;
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
 
 type Props = {
   module: ModuleItem | null;
