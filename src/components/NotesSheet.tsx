@@ -295,7 +295,7 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
             )}
 
             <article
-              className="mx-auto max-w-3xl space-y-10 text-paper-foreground"
+              className="space-y-12 text-paper-foreground"
               style={{
                 fontFamily: prefs.font,
                 fontSize: `${prefs.size}pt`,
@@ -303,27 +303,37 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
               }}
             >
               {slides.map((slide) => (
-                <section key={slide.n} id={`slide-${slide.n}`} className="scroll-mt-6">
-                  <h3 className="mb-4 flex items-start gap-3 text-[1.3em] font-bold text-paper-foreground">
-                    <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold text-primary-foreground">
-                      {slide.n}
-                    </span>
-                    {slide.title}
-                  </h3>
-                  <div className="space-y-3">
-                    {slide.blocks.map((b, i) => (
-                      <BlockView key={i} block={b} />
-                    ))}
+                <section
+                  key={slide.n}
+                  id={`slide-${slide.n}`}
+                  className="grid scroll-mt-6 gap-6 xl:grid-cols-[minmax(0,34rem)_minmax(0,1fr)]"
+                >
+                  <div className="min-w-0">
+                    <h3 className="mb-4 flex items-start gap-3 text-[1.3em] font-bold text-paper-foreground">
+                      <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold text-primary-foreground">
+                        {slide.n}
+                      </span>
+                      {slide.title}
+                    </h3>
+                    <div className="space-y-3">
+                      {slide.blocks.map((b, i) => (
+                        <BlockView key={i} block={b} />
+                      ))}
+                    </div>
+                    {slide.sources && (
+                      <p className="mt-4 rounded-lg border border-paper-border p-3 text-[0.8em] text-paper-muted">
+                        <BookOpen className="mr-1 inline size-3.5 align-[-2px]" />
+                        Джерела: {slide.sources}
+                      </p>
+                    )}
                   </div>
-                  {slide.sources && (
-                    <p className="mt-4 rounded-lg border border-paper-border p-3 text-[0.8em] text-paper-muted">
-                      <BookOpen className="mr-1 inline size-3.5 align-[-2px]" />
-                      Джерела: {slide.sources}
-                    </p>
+                  {module?.url && (
+                    <SlidePreview url={module.url} index={slide.n} title={slide.title} />
                   )}
                 </section>
               ))}
             </article>
+
           </div>
         </div>
       </SheetContent>
