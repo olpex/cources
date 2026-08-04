@@ -3,9 +3,42 @@ import { BookOpen, Loader2, ExternalLink, Pencil } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { fetchNotes, type SlideNote } from "@/data/courses";
 import type { NoteBlock } from "@/lib/gdocs-parse";
 import type { ModuleItem } from "@/data/store";
+
+const FONTS = [
+  { label: "Verdana", value: "Verdana, Geneva, sans-serif" },
+  { label: "Roboto", value: '"Roboto", sans-serif' },
+  { label: "Arial", value: "Arial, Helvetica, sans-serif" },
+  { label: "Calibri", value: "Calibri, Candara, Segoe UI, sans-serif" },
+  { label: "Open Sans", value: '"Open Sans", sans-serif' },
+  { label: "Tahoma", value: "Tahoma, Geneva, sans-serif" },
+];
+const SIZES = [12, 13, 14, 15, 16];
+const LINE_HEIGHTS = [1, 1.15, 1.5, 2];
+
+type Prefs = { font: string; size: number; lh: number };
+const PREFS_KEY = "notes-typography";
+const DEFAULT_PREFS: Prefs = { font: FONTS[0]!.value, size: 14, lh: 1.5 };
+
+function loadPrefs(): Prefs {
+  if (typeof window === "undefined") return DEFAULT_PREFS;
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) } : DEFAULT_PREFS;
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
 
 type Props = {
   module: ModuleItem | null;
@@ -58,20 +91,20 @@ function BlockView({ block }: { block: NoteBlock }) {
   const indent = { marginInlineStart: `${(block.level ?? 0) * 1.25}rem` };
   if (block.type === "h") {
     return (
-      <h4 style={indent} className="mt-6 text-lg font-semibold leading-snug">
+      <h4 style={indent} className="mt-6 text-[1.15em] font-semibold">
         {block.text}
       </h4>
     );
   }
   if (block.type === "li") {
     return (
-      <li style={indent} className="ml-5 list-disc leading-relaxed marker:text-primary">
+      <li style={indent} className="ml-6 list-disc marker:text-paper-muted">
         {block.text}
       </li>
     );
   }
   return (
-    <p style={indent} className="leading-[1.75]">
+    <p style={indent} className="indent-8">
       {block.text}
     </p>
   );
@@ -82,7 +115,24 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [prefs, setPrefs] = useState<Prefs>(DEFAULT_PREFS);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setPrefs(loadPrefs());
+  }, []);
+
+  const updatePrefs = (patch: Partial<Prefs>) => {
+    setPrefs((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        window.localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
 
   const custom = module?.notes;
   const doc = module?.notesDoc;
@@ -135,11 +185,13 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="flex h-svh w-screen max-w-none flex-col gap-0 p-0 sm:max-w-none"
+        className="flex h-svh w-screen max-w-none flex-col gap-0 bg-paper p-0 text-paper-foreground sm:max-w-none"
       >
-        <div className="border-b border-border bg-secondary/60 px-6 py-4">
-          <SheetTitle className="pr-10 text-xl leading-snug">{module?.title}</SheetTitle>
-          <SheetDescription>
+        <div className="border-b border-paper-border bg-paper px-6 py-4">
+          <SheetTitle className="pr-10 text-xl leading-snug text-paper-foreground">
+            {module?.title}
+          </SheetTitle>
+          <SheetDescription className="text-paper-muted">
             Нотатки викладача{all.length ? ` — ${all.length} слайдів` : ""}
           </SheetDescription>
           <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -162,20 +214,62 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Пошук у нотатках…"
               aria-label="Пошук у нотатках"
-              className="h-9 w-full sm:w-72"
+              className="h-9 w-full sm:w-64"
             />
+
+            <Select value={prefs.font} onValueChange={(v) => updatePrefs({ font: v })}>
+              <SelectTrigger className="h-9 w-40" aria-label="Шрифт нотаток">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FONTS.map((f) => (
+                  <SelectItem key={f.label} value={f.value} style={{ fontFamily: f.value }}>
+                    {f.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={String(prefs.size)}
+              onValueChange={(v) => updatePrefs({ size: Number(v) })}
+            >
+              <SelectTrigger className="h-9 w-28" aria-label="Розмір шрифту">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SIZES.map((s) => (
+                  <SelectItem key={s} value={String(s)}>
+                    {s} пт
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={String(prefs.lh)} onValueChange={(v) => updatePrefs({ lh: Number(v) })}>
+              <SelectTrigger className="h-9 w-32" aria-label="Міжрядковий інтервал">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LINE_HEIGHTS.map((l) => (
+                  <SelectItem key={l} value={String(l)}>
+                    Інтервал {l}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1">
-          <nav className="hidden w-72 shrink-0 overflow-y-auto border-r border-border bg-card/40 p-3 lg:block">
+        <div className="flex min-h-0 flex-1 bg-paper">
+          <nav className="hidden w-72 shrink-0 overflow-y-auto border-r border-paper-border p-3 lg:block">
             <ol className="space-y-1">
               {slides.map((s) => (
                 <li key={s.n}>
                   <button
                     type="button"
                     onClick={() => goTo(s.n)}
-                    className="w-full rounded-lg px-3 py-2 text-left text-sm leading-snug text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm leading-snug text-paper-muted transition-colors hover:bg-muted hover:text-paper-foreground"
                   >
                     {s.title}
                   </button>
@@ -186,36 +280,43 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 py-8">
             {loading && (
-              <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 py-16 text-paper-muted">
                 <Loader2 className="size-4 animate-spin" />
                 Завантаження нотаток…
               </div>
             )}
             {error && <p className="py-10 text-center text-destructive">{error}</p>}
             {!loading && !error && slides.length === 0 && (
-              <p className="py-10 text-center text-muted-foreground">
+              <p className="py-10 text-center text-paper-muted">
                 {all.length === 0
                   ? "Нотаток ще немає — додайте їх у режимі редагування."
                   : "Нічого не знайдено."}
               </p>
             )}
 
-            <article className="mx-auto max-w-3xl space-y-10 text-[1.05rem] text-foreground/90">
+            <article
+              className="mx-auto max-w-3xl space-y-10 text-paper-foreground"
+              style={{
+                fontFamily: prefs.font,
+                fontSize: `${prefs.size}pt`,
+                lineHeight: prefs.lh,
+              }}
+            >
               {slides.map((slide) => (
                 <section key={slide.n} id={`slide-${slide.n}`} className="scroll-mt-6">
-                  <h3 className="mb-4 flex items-start gap-3 text-xl font-semibold leading-snug text-foreground">
+                  <h3 className="mb-4 flex items-start gap-3 text-[1.3em] font-bold text-paper-foreground">
                     <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-semibold text-primary-foreground">
                       {slide.n}
                     </span>
                     {slide.title}
                   </h3>
-                  <div className="space-y-4 [&_li+li]:mt-1">
+                  <div className="space-y-3">
                     {slide.blocks.map((b, i) => (
                       <BlockView key={i} block={b} />
                     ))}
                   </div>
                   {slide.sources && (
-                    <p className="mt-4 rounded-lg bg-muted p-3 text-xs leading-relaxed text-muted-foreground">
+                    <p className="mt-4 rounded-lg border border-paper-border p-3 text-[0.8em] text-paper-muted">
                       <BookOpen className="mr-1 inline size-3.5 align-[-2px]" />
                       Джерела: {slide.sources}
                     </p>
@@ -229,3 +330,4 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
     </Sheet>
   );
 }
+

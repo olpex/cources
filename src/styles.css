@@ -23,6 +23,11 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-paper: var(--paper);
+  --color-paper-foreground: var(--paper-foreground);
+  --color-paper-muted: var(--paper-muted);
+  --color-paper-border: var(--paper-border);
+
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
   --shadow-soft: 0 1px 2px oklch(0.25 0.05 190 / 0.06), 0 12px 32px -12px oklch(0.25 0.05 190 / 0.18);
@@ -90,6 +95,11 @@
   --brand-foreground: oklch(0.985 0.01 95);
   --highlight: oklch(0.78 0.145 72);
   --highlight-foreground: oklch(0.26 0.05 60);
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.21 0 0);
+  --paper-muted: oklch(0.45 0 0);
+  --paper-border: oklch(0.88 0 0);
+
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
   --border: oklch(0.905 0.014 190);
@@ -148,7 +158,12 @@
   --brand-foreground: oklch(0.16 0.03 195);
   --highlight: oklch(0.78 0.145 72);
   --highlight-foreground: oklch(0.2 0.04 60);
+  --paper: oklch(1 0 0);
+  --paper-foreground: oklch(0.21 0 0);
+  --paper-muted: oklch(0.45 0 0);
+  --paper-border: oklch(0.88 0 0);
 }
+
 
 @layer base {
   * {
