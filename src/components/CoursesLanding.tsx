@@ -158,13 +158,23 @@ export function CoursesLanding() {
               </div>
               {edit && (
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant={course.sourceDocUrl ? "default" : "outline"}
-                    onClick={() => setImportDialog({ course })}
-                  >
-                    <RefreshCw className="size-4" />
-                    {course.sourceDocUrl ? "Оновити з документа" : "Прив’язати документ"}
+                  {course.sourceDocUrl && (
+                    <Button
+                      size="sm"
+                      onClick={() => void syncCourse(course)}
+                      disabled={syncingId === course.id}
+                    >
+                      {syncingId === course.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-4" />
+                      )}
+                      Оновити
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setImportDialog({ course })}>
+                    <Link2 className="size-4" />
+                    Прив’язати документ
                   </Button>
                   <Button
 
