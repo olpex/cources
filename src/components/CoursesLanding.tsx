@@ -203,6 +203,10 @@ export function CoursesLanding() {
                 </div>
               )}
             </div>
+            {edit && syncError?.id === course.id && (
+              <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
+            )}
+
 
             {course.modules.length === 0 && !edit ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
