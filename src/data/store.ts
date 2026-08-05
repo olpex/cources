@@ -238,7 +238,10 @@ export function useContent() {
       const target =
         prev.find((c) => c.id === courseId) ??
         prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
+        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === doc.docId) ??
+        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === extractDocId(url)) ??
         null;
+
       if (target) {
         resultId = target.id;
         return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
