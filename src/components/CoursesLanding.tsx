@@ -63,7 +63,30 @@ export function CoursesLanding() {
   } | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
 
+  const runImport = useServerFn(importGoogleDoc);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<{ id: string; message: string } | null>(null);
+
+  const syncCourse = async (course: CourseItem) => {
+    if (!course.sourceDocUrl) return;
+    setSyncingId(course.id);
+    setSyncError(null);
+    try {
+      const doc = await runImport({ data: { url: course.sourceDocUrl } });
+      applyDoc(doc, course.sourceDocUrl, course.id);
+    } catch (e) {
+      setSyncError({
+        id: course.id,
+        message: e instanceof Error ? e.message : "Не вдалося оновити курс",
+      });
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
   const total = courses.reduce((n, c) => n + c.modules.length, 0);
+
+
 
 
   return (
