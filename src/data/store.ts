@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/courses";
-import type { ParsedDoc, ParsedSlide } from "@/lib/gdocs-parse";
+import { extractDocId, type ParsedDoc, type ParsedSlide } from "@/lib/gdocs-parse";
 
 export type ModuleItem = {
   id: string;
@@ -91,7 +91,11 @@ export async function builtinNotesText(id: string): Promise<string> {
   return slidesToText(data.slides);
 }
 
-/** Merge a parsed Google Doc into an existing course (or build a new one). */
+function sameSlides(a: ParsedSlide[] | undefined, b: ParsedSlide[]) {
+  return JSON.stringify(a ?? null) === JSON.stringify(b);
+}
+
+/** Merge a parsed Google Doc into an existing course (or build a new one), in place. */
 function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): CourseItem {
   const base: CourseItem = course ?? {
     id: uid(),
@@ -101,29 +105,65 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
     modules: [],
   };
 
-  const existing = new Map(base.modules.filter((m) => m.sourceTabId).map((m) => [m.sourceTabId!, m]));
+  // Match existing modules by tab id first, then by title, then by presentation url.
+  const pool = [...base.modules];
+  const takeMatch = (m: { tabId: string; title: string; url: string }): ModuleItem | undefined => {
+    const byId = pool.findIndex((x) => x.sourceTabId && x.sourceTabId === m.tabId);
+    const idx =
+      byId >= 0
+        ? byId
+        : pool.findIndex(
+            (x) =>
+              x.title.trim().toLowerCase() === m.title.trim().toLowerCase() ||
+              (!!m.url && !!x.url && x.url === m.url),
+          );
+    if (idx < 0) return undefined;
+    return pool.splice(idx, 1)[0];
+  };
+
   const imported: ModuleItem[] = doc.modules.map((m) => {
-    const prev = existing.get(m.tabId);
-    const next: ModuleItem = {
-      id: prev?.id ?? uid(),
+    const prev = takeMatch(m);
+    if (!prev) {
+      return {
+        id: uid(),
+        title: m.title,
+        url: m.url,
+        slides: m.slides.length,
+        notesDoc: m.slides,
+        sourceTabId: m.tabId,
+      };
+    }
+    const unchanged =
+      prev.title === m.title &&
+      prev.url === (m.url || prev.url) &&
+      prev.sourceTabId === m.tabId &&
+      sameSlides(prev.notesDoc, m.slides);
+    if (unchanged) return prev;
+    return {
+      ...prev,
       title: m.title,
-      url: m.url || prev?.url || "",
+      url: m.url || prev.url || "",
       slides: m.slides.length,
       notesDoc: m.slides,
       sourceTabId: m.tabId,
     };
-    return next;
   });
 
+  // Anything left in the pool that came from the doc was removed from the doc → drop it.
+  // Manually added modules (no sourceTabId and no doc match) are kept.
+  const manual = pool.filter((m) => !m.sourceTabId);
 
-  const manual = base.modules.filter((m) => !m.sourceTabId);
+  const nextTitle = course && course.title !== doc.title ? doc.title : base.title;
+
   return {
     ...base,
+    title: nextTitle,
     modules: [...imported, ...manual],
     sourceDocId: doc.docId,
     sourceDocUrl: url,
   };
 }
+
 
 export function useContent() {
   const [courses, setCourses] = useState<CourseItem[]>(seed);
@@ -198,7 +238,10 @@ export function useContent() {
       const target =
         prev.find((c) => c.id === courseId) ??
         prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
+        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === doc.docId) ??
+        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === extractDocId(url)) ??
         null;
+
       if (target) {
         resultId = target.id;
         return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
