@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/courses";
-import type { ParsedDoc, ParsedSlide } from "@/lib/gdocs-parse";
+import { extractDocId, type ParsedDoc, type ParsedSlide } from "@/lib/gdocs-parse";
 
 export type ModuleItem = {
   id: string;
