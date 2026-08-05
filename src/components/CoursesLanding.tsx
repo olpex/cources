@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ExternalLink,
   FileText,
   FileUp,
+  Link2,
+  Loader2,
   Pencil,
   Plus,
   Presentation,
@@ -11,6 +14,7 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
+import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -59,7 +63,30 @@ export function CoursesLanding() {
   } | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
 
+  const runImport = useServerFn(importGoogleDoc);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<{ id: string; message: string } | null>(null);
+
+  const syncCourse = async (course: CourseItem) => {
+    if (!course.sourceDocUrl) return;
+    setSyncingId(course.id);
+    setSyncError(null);
+    try {
+      const doc = await runImport({ data: { url: course.sourceDocUrl } });
+      applyDoc(doc, course.sourceDocUrl, course.id);
+    } catch (e) {
+      setSyncError({
+        id: course.id,
+        message: e instanceof Error ? e.message : "Не вдалося оновити курс",
+      });
+    } finally {
+      setSyncingId(null);
+    }
+  };
+
   const total = courses.reduce((n, c) => n + c.modules.length, 0);
+
+
 
 
   return (
@@ -131,13 +158,23 @@ export function CoursesLanding() {
               </div>
               {edit && (
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant={course.sourceDocUrl ? "default" : "outline"}
-                    onClick={() => setImportDialog({ course })}
-                  >
-                    <RefreshCw className="size-4" />
-                    {course.sourceDocUrl ? "Оновити з документа" : "Прив’язати документ"}
+                  {course.sourceDocUrl && (
+                    <Button
+                      size="sm"
+                      onClick={() => void syncCourse(course)}
+                      disabled={syncingId === course.id}
+                    >
+                      {syncingId === course.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-4" />
+                      )}
+                      Оновити
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setImportDialog({ course })}>
+                    <Link2 className="size-4" />
+                    Прив’язати документ
                   </Button>
                   <Button
 
@@ -166,6 +203,10 @@ export function CoursesLanding() {
                 </div>
               )}
             </div>
+            {edit && syncError?.id === course.id && (
+              <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
+            )}
+
 
             {course.modules.length === 0 && !edit ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
