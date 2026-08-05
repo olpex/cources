@@ -158,20 +158,28 @@ export function CoursesLanding() {
               </div>
               {edit && (
                 <div className="flex flex-wrap gap-2">
-                  {course.sourceDocUrl && (
-                    <Button
-                      size="sm"
-                      onClick={() => void syncCourse(course)}
-                      disabled={syncingId === course.id}
-                    >
-                      {syncingId === course.id ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <RefreshCw className="size-4" />
-                      )}
-                      Оновити
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      course.sourceDocUrl
+                        ? void syncCourse(course)
+                        : setImportDialog({ course })
+                    }
+                    disabled={syncingId === course.id}
+                    title={
+                      course.sourceDocUrl
+                        ? "Оновити дані з прив’язаного Google Документа"
+                        : "Спочатку прив’яжіть Google Документ"
+                    }
+                  >
+                    {syncingId === course.id ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="size-4" />
+                    )}
+                    Оновити
+                  </Button>
+
                   <Button size="sm" variant="outline" onClick={() => setImportDialog({ course })}>
                     <Link2 className="size-4" />
                     Прив’язати документ
