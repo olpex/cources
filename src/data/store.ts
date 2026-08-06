@@ -30,7 +30,8 @@ export type CourseItem = {
   sourceDocUrl?: string;
 };
 
-const STORAGE_KEY = "lms-content-v1";
+const LEGACY_STORAGE_KEY = "lms-content-v1";
+const ROW_ID = "main";
 
 export function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -52,18 +53,37 @@ function seed(): CourseItem[] {
   }));
 }
 
-function load(): CourseItem[] {
-  if (typeof window === "undefined") return seed();
+/** Content saved in this browser before the shared database existed. */
+function legacyLocal(): CourseItem[] | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seed();
+    const raw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return null;
     const parsed = JSON.parse(raw) as CourseItem[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return seed();
-    return parsed;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
   } catch {
-    return seed();
+    return null;
   }
 }
+
+async function fetchRemote(): Promise<CourseItem[] | null> {
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("data")
+    .eq("id", ROW_ID)
+    .maybeSingle();
+  if (error || !data) return null;
+  const parsed = data.data as unknown as CourseItem[];
+  return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+}
+
+async function saveRemote(courses: CourseItem[]) {
+  const { error } = await supabase
+    .from("site_content")
+    .upsert({ id: ROW_ID, data: courses as never, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
 
 /** Serialise bundled slide notes into editable plain text. */
 export function slidesToText(slides: SlideNote[]): string {
