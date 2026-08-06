@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   ExternalLink,
   FileText,
   FileUp,
   Link2,
   Loader2,
+  LogIn,
+  LogOut,
   Pencil,
   Plus,
   Presentation,
@@ -34,10 +37,14 @@ import { CourseDialog } from "@/components/CourseDialog";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 type Confirm = { title: string; description: string; action: () => void } | null;
 
 export function CoursesLanding() {
+  const { user, isTeacher } = useAuth();
+  const navigate = useNavigate();
   const {
     courses,
     storageError,
@@ -49,7 +56,11 @@ export function CoursesLanding() {
     removeModule,
     applyDoc,
     resetAll,
-  } = useContent();
+  } = useContent(isTeacher);
+
+  const [editMode, setEditMode] = useState(false);
+  const edit = editMode && isTeacher;
+
 
   const [edit, setEdit] = useState(false);
   const [notesFor, setNotesFor] = useState<{ course: CourseItem; module: ModuleItem } | null>(null);
