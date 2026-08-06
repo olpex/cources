@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/courses";
 import { extractDocId, type ParsedDoc, type ParsedSlide } from "@/lib/gdocs-parse";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export type ModuleItem = {
   id: string;
@@ -28,7 +30,8 @@ export type CourseItem = {
   sourceDocUrl?: string;
 };
 
-const STORAGE_KEY = "lms-content-v1";
+const LEGACY_STORAGE_KEY = "lms-content-v1";
+const ROW_ID = "main";
 
 export function uid() {
   return Math.random().toString(36).slice(2, 10);
@@ -50,18 +53,37 @@ function seed(): CourseItem[] {
   }));
 }
 
-function load(): CourseItem[] {
-  if (typeof window === "undefined") return seed();
+/** Content saved in this browser before the shared database existed. */
+function legacyLocal(): CourseItem[] | null {
+  if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seed();
+    const raw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return null;
     const parsed = JSON.parse(raw) as CourseItem[];
-    if (!Array.isArray(parsed) || parsed.length === 0) return seed();
-    return parsed;
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
   } catch {
-    return seed();
+    return null;
   }
 }
+
+async function fetchRemote(): Promise<CourseItem[] | null> {
+  const { data, error } = await supabase
+    .from("site_content")
+    .select("data")
+    .eq("id", ROW_ID)
+    .maybeSingle();
+  if (error || !data) return null;
+  const parsed = data.data as unknown as CourseItem[];
+  return Array.isArray(parsed) && parsed.length > 0 ? parsed : null;
+}
+
+async function saveRemote(courses: CourseItem[]) {
+  const { error } = await supabase
+    .from("site_content")
+    .upsert({ id: ROW_ID, data: courses as never, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
 
 /** Serialise bundled slide notes into editable plain text. */
 export function slidesToText(slides: SlideNote[]): string {
@@ -165,51 +187,94 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
 }
 
 
-export function useContent() {
+/**
+ * Shared content stored in Lovable Cloud so every device sees the same courses.
+ * Only a signed-in teacher (`canEdit`) writes changes back.
+ */
+export function useContent(canEdit = false) {
   const [courses, setCourses] = useState<CourseItem[]>(seed);
   const [hydrated, setHydrated] = useState(false);
+  const [remoteEmpty, setRemoteEmpty] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const dirty = useRef(false);
+  const canEditRef = useRef(canEdit);
+  canEditRef.current = canEdit;
 
   useEffect(() => {
-    setCourses(load());
-    setHydrated(true);
+    let active = true;
+    void (async () => {
+      const remote = await fetchRemote();
+      if (!active) return;
+      setCourses(remote ?? legacyLocal() ?? seed());
+      setRemoteEmpty(!remote);
+      setHydrated(true);
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
+  // First teacher to sign in publishes the local content into the shared database.
   useEffect(() => {
-    if (!hydrated) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(courses));
-      setStorageError(null);
-    } catch {
-      setStorageError(
-        "Забагато вмісту для збереження в браузері — останні зміни можуть не зберегтися після перезавантаження.",
-      );
-    }
+    if (!hydrated || !remoteEmpty || !canEdit) return;
+    setRemoteEmpty(false);
+    saveRemote(courses).catch(() => setRemoteEmpty(true));
+  }, [hydrated, remoteEmpty, canEdit, courses]);
+
+
+  useEffect(() => {
+    if (!hydrated || !dirty.current || !canEditRef.current) return;
+    const t = window.setTimeout(() => {
+      saveRemote(courses)
+        .then(() => setStorageError(null))
+        .catch(() =>
+          setStorageError("Не вдалося зберегти зміни у спільній базі. Перевірте вхід і зв'язок."),
+        );
+    }, 600);
+    return () => window.clearTimeout(t);
   }, [courses, hydrated]);
 
-  const addCourse = useCallback((data: Omit<CourseItem, "id" | "modules">) => {
-    setCourses((prev) => [...prev, { ...data, id: uid(), modules: [] }]);
+  const mutate = useCallback((fn: (prev: CourseItem[]) => CourseItem[]) => {
+    dirty.current = true;
+    setCourses(fn);
   }, []);
 
-  const updateCourse = useCallback((id: string, data: Partial<CourseItem>) => {
-    setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
-  }, []);
 
-  const removeCourse = useCallback((id: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  const addCourse = useCallback(
+    (data: Omit<CourseItem, "id" | "modules">) => {
+      mutate((prev) => [...prev, { ...data, id: uid(), modules: [] }]);
+    },
+    [mutate],
+  );
 
-  const addModule = useCallback((courseId: string, data: Omit<ModuleItem, "id">) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === courseId ? { ...c, modules: [...c.modules, { ...data, id: uid() }] } : c,
-      ),
-    );
-  }, []);
+  const updateCourse = useCallback(
+    (id: string, data: Partial<CourseItem>) => {
+      mutate((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
+    },
+    [mutate],
+  );
+
+  const removeCourse = useCallback(
+    (id: string) => {
+      mutate((prev) => prev.filter((c) => c.id !== id));
+    },
+    [mutate],
+  );
+
+  const addModule = useCallback(
+    (courseId: string, data: Omit<ModuleItem, "id">) => {
+      mutate((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, modules: [...c.modules, { ...data, id: uid() }] } : c,
+        ),
+      );
+    },
+    [mutate],
+  );
 
   const updateModule = useCallback(
     (courseId: string, moduleId: string, data: Partial<ModuleItem>) => {
-      setCourses((prev) =>
+      mutate((prev) =>
         prev.map((c) =>
           c.id === courseId
             ? {
@@ -220,40 +285,47 @@ export function useContent() {
         ),
       );
     },
-    [],
+    [mutate],
   );
 
-  const removeModule = useCallback((courseId: string, moduleId: string) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === courseId ? { ...c, modules: c.modules.filter((m) => m.id !== moduleId) } : c,
-      ),
-    );
-  }, []);
+  const removeModule = useCallback(
+    (courseId: string, moduleId: string) => {
+      mutate((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, modules: c.modules.filter((m) => m.id !== moduleId) } : c,
+        ),
+      );
+    },
+    [mutate],
+  );
 
   /** Create a course from a Google Doc, or refresh an existing one. */
-  const applyDoc = useCallback((doc: ParsedDoc, url: string, courseId?: string) => {
-    let resultId = courseId ?? "";
-    setCourses((prev) => {
-      const target =
-        prev.find((c) => c.id === courseId) ??
-        prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
-        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === doc.docId) ??
-        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === extractDocId(url)) ??
-        null;
+  const applyDoc = useCallback(
+    (doc: ParsedDoc, url: string, courseId?: string) => {
+      let resultId = courseId ?? "";
+      mutate((prev) => {
+        const target =
+          prev.find((c) => c.id === courseId) ??
+          prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
+          prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === doc.docId) ??
+          prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === extractDocId(url)) ??
+          null;
 
-      if (target) {
-        resultId = target.id;
-        return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
-      }
-      const created = mergeDoc(null, doc, url);
-      resultId = created.id;
-      return [...prev, created];
-    });
-    return resultId;
-  }, []);
+        if (target) {
+          resultId = target.id;
+          return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
+        }
+        const created = mergeDoc(null, doc, url);
+        resultId = created.id;
+        return [...prev, created];
+      });
+      return resultId;
+    },
+    [mutate],
+  );
 
-  const resetAll = useCallback(() => setCourses(seed()), []);
+  const resetAll = useCallback(() => mutate(() => seed()), [mutate]);
+
 
   return {
     courses,
