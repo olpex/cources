@@ -44,7 +44,7 @@ type Confirm = { title: string; description: string; action: () => void } | null
 
 export function CoursesLanding() {
   const { user, isTeacher } = useAuth();
-  const navigate = useNavigate();
+  
   const {
     courses,
     storageError,
@@ -349,7 +349,7 @@ export function CoursesLanding() {
       <footer className="border-t border-border py-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6">
           <p className="text-sm text-muted-foreground">
-            Матеріали зберігаються у цьому браузері. Редагуйте вміст у режимі редагування.
+            Матеріали зберігаються у спільній базі — однакові на всіх комп'ютерах.
           </p>
           {edit && (
             <Button
