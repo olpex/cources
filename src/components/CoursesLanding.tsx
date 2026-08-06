@@ -107,12 +107,37 @@ export function CoursesLanding() {
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">
               Навчальна платформа для викладача
             </p>
-            <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2">
-              <Switch id="edit-mode" checked={edit} onCheckedChange={setEdit} />
-              <Label htmlFor="edit-mode" className="cursor-pointer text-sm">
-                Режим редагування
-              </Label>
+            <div className="flex flex-wrap items-center gap-3">
+              {isTeacher && (
+                <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2">
+                  <Switch id="edit-mode" checked={editMode} onCheckedChange={setEditMode} />
+                  <Label htmlFor="edit-mode" className="cursor-pointer text-sm">
+                    Режим редагування
+                  </Label>
+                </div>
+              )}
+              {user ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    setEditMode(false);
+                  }}
+                >
+                  <LogOut className="size-4" />
+                  Вийти
+                </Button>
+              ) : (
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/auth">
+                    <LogIn className="size-4" />
+                    Вхід для викладача
+                  </Link>
+                </Button>
+              )}
             </div>
+
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] sm:text-6xl">
             Презентації та нотатки для аудиторних занять
