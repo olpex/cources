@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/courses";
 import { extractDocId, type ParsedDoc, type ParsedSlide } from "@/lib/gdocs-parse";
+import { supabase } from "@/integrations/supabase/client";
+
 
 export type ModuleItem = {
   id: string;
