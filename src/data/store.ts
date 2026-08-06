@@ -194,6 +194,7 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
 export function useContent(canEdit = false) {
   const [courses, setCourses] = useState<CourseItem[]>(seed);
   const [hydrated, setHydrated] = useState(false);
+  const [remoteEmpty, setRemoteEmpty] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const dirty = useRef(false);
   const canEditRef = useRef(canEdit);
@@ -205,12 +206,21 @@ export function useContent(canEdit = false) {
       const remote = await fetchRemote();
       if (!active) return;
       setCourses(remote ?? legacyLocal() ?? seed());
+      setRemoteEmpty(!remote);
       setHydrated(true);
     })();
     return () => {
       active = false;
     };
   }, []);
+
+  // First teacher to sign in publishes the local content into the shared database.
+  useEffect(() => {
+    if (!hydrated || !remoteEmpty || !canEdit) return;
+    setRemoteEmpty(false);
+    saveRemote(courses).catch(() => setRemoteEmpty(true));
+  }, [hydrated, remoteEmpty, canEdit, courses]);
+
 
   useEffect(() => {
     if (!hydrated || !dirty.current || !canEditRef.current) return;
