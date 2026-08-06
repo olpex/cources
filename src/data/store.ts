@@ -230,29 +230,41 @@ export function useContent(canEdit = false) {
   }, []);
 
 
-  const addCourse = useCallback((data: Omit<CourseItem, "id" | "modules">) => {
-    setCourses((prev) => [...prev, { ...data, id: uid(), modules: [] }]);
-  }, []);
+  const addCourse = useCallback(
+    (data: Omit<CourseItem, "id" | "modules">) => {
+      mutate((prev) => [...prev, { ...data, id: uid(), modules: [] }]);
+    },
+    [mutate],
+  );
 
-  const updateCourse = useCallback((id: string, data: Partial<CourseItem>) => {
-    setCourses((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
-  }, []);
+  const updateCourse = useCallback(
+    (id: string, data: Partial<CourseItem>) => {
+      mutate((prev) => prev.map((c) => (c.id === id ? { ...c, ...data } : c)));
+    },
+    [mutate],
+  );
 
-  const removeCourse = useCallback((id: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  const removeCourse = useCallback(
+    (id: string) => {
+      mutate((prev) => prev.filter((c) => c.id !== id));
+    },
+    [mutate],
+  );
 
-  const addModule = useCallback((courseId: string, data: Omit<ModuleItem, "id">) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === courseId ? { ...c, modules: [...c.modules, { ...data, id: uid() }] } : c,
-      ),
-    );
-  }, []);
+  const addModule = useCallback(
+    (courseId: string, data: Omit<ModuleItem, "id">) => {
+      mutate((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, modules: [...c.modules, { ...data, id: uid() }] } : c,
+        ),
+      );
+    },
+    [mutate],
+  );
 
   const updateModule = useCallback(
     (courseId: string, moduleId: string, data: Partial<ModuleItem>) => {
-      setCourses((prev) =>
+      mutate((prev) =>
         prev.map((c) =>
           c.id === courseId
             ? {
@@ -263,40 +275,47 @@ export function useContent(canEdit = false) {
         ),
       );
     },
-    [],
+    [mutate],
   );
 
-  const removeModule = useCallback((courseId: string, moduleId: string) => {
-    setCourses((prev) =>
-      prev.map((c) =>
-        c.id === courseId ? { ...c, modules: c.modules.filter((m) => m.id !== moduleId) } : c,
-      ),
-    );
-  }, []);
+  const removeModule = useCallback(
+    (courseId: string, moduleId: string) => {
+      mutate((prev) =>
+        prev.map((c) =>
+          c.id === courseId ? { ...c, modules: c.modules.filter((m) => m.id !== moduleId) } : c,
+        ),
+      );
+    },
+    [mutate],
+  );
 
   /** Create a course from a Google Doc, or refresh an existing one. */
-  const applyDoc = useCallback((doc: ParsedDoc, url: string, courseId?: string) => {
-    let resultId = courseId ?? "";
-    setCourses((prev) => {
-      const target =
-        prev.find((c) => c.id === courseId) ??
-        prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
-        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === doc.docId) ??
-        prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === extractDocId(url)) ??
-        null;
+  const applyDoc = useCallback(
+    (doc: ParsedDoc, url: string, courseId?: string) => {
+      let resultId = courseId ?? "";
+      mutate((prev) => {
+        const target =
+          prev.find((c) => c.id === courseId) ??
+          prev.find((c) => c.sourceDocId && c.sourceDocId === doc.docId) ??
+          prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === doc.docId) ??
+          prev.find((c) => c.sourceDocUrl && extractDocId(c.sourceDocUrl) === extractDocId(url)) ??
+          null;
 
-      if (target) {
-        resultId = target.id;
-        return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
-      }
-      const created = mergeDoc(null, doc, url);
-      resultId = created.id;
-      return [...prev, created];
-    });
-    return resultId;
-  }, []);
+        if (target) {
+          resultId = target.id;
+          return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
+        }
+        const created = mergeDoc(null, doc, url);
+        resultId = created.id;
+        return [...prev, created];
+      });
+      return resultId;
+    },
+    [mutate],
+  );
 
-  const resetAll = useCallback(() => setCourses(seed()), []);
+  const resetAll = useCallback(() => mutate(() => seed()), [mutate]);
+
 
   return {
     courses,
