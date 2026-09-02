@@ -375,7 +375,7 @@ export function CoursesLanding() {
         open={notesOpen}
         onOpenChange={setNotesOpen}
         onEdit={
-          notesFor
+          isTeacher && notesFor
             ? () => {
                 setModuleDialog({ courseId: notesFor.course.id, module: notesFor.module });
                 setNotesOpen(false);
