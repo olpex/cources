@@ -2,11 +2,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 export function toViewOnlyUrl(url: string): string | null {
   const id = url.match(/\/presentation\/d\/([a-zA-Z0-9_-]+)/)?.[1];
-  if (id) return `https://docs.google.com/presentation/d/${id}/preview`;
+  if (id)
+    return `https://docs.google.com/presentation/d/${id}/embed?start=false&loop=false&rm=minimal`;
   const docId = url.match(/\/document\/d\/([a-zA-Z0-9_-]+)/)?.[1];
   if (docId) return `https://docs.google.com/document/d/${docId}/preview`;
   return null;
 }
+
 
 export function PresentationViewer({
   title,
