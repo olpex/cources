@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
+import { PresentationViewer } from "@/components/PresentationViewer";
+
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
@@ -72,6 +74,8 @@ export function CoursesLanding() {
     module: ModuleItem | null;
   } | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
+  const [viewer, setViewer] = useState<{ title: string; url: string } | null>(null);
+
 
   const runImport = useServerFn(importGoogleDoc);
   const [syncingId, setSyncingId] = useState<string | null>(null);
