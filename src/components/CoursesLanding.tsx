@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
+import { PresentationViewer } from "@/components/PresentationViewer";
+
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
@@ -72,6 +74,8 @@ export function CoursesLanding() {
     module: ModuleItem | null;
   } | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
+  const [viewer, setViewer] = useState<{ title: string; url: string } | null>(null);
+
 
   const runImport = useServerFn(importGoogleDoc);
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -278,15 +282,25 @@ export function CoursesLanding() {
                       </div>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {m.url && (
-                        <Button asChild size="sm">
-                          <a href={m.url} target="_blank" rel="noopener noreferrer">
+                      {m.url &&
+                        (isTeacher ? (
+                          <Button asChild size="sm">
+                            <a href={m.url} target="_blank" rel="noopener noreferrer">
+                              <Presentation className="size-4" />
+                              Показати презентацію
+                              <ExternalLink className="size-3.5 opacity-70" />
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => setViewer({ title: m.title, url: m.url })}
+                          >
                             <Presentation className="size-4" />
                             Показати презентацію
-                            <ExternalLink className="size-3.5 opacity-70" />
-                          </a>
-                        </Button>
-                      )}
+                          </Button>
+                        ))}
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -370,7 +384,15 @@ export function CoursesLanding() {
         </div>
       </footer>
 
+      <PresentationViewer
+        title={viewer?.title ?? ""}
+        url={viewer?.url ?? null}
+        open={viewer !== null}
+        onOpenChange={(o) => !o && setViewer(null)}
+      />
+
       <NotesSheet
+
         module={notesFor?.module ?? null}
         open={notesOpen}
         onOpenChange={setNotesOpen}
