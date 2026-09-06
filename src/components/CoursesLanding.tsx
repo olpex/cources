@@ -384,7 +384,15 @@ export function CoursesLanding() {
         </div>
       </footer>
 
+      <PresentationViewer
+        title={viewer?.title ?? ""}
+        url={viewer?.url ?? null}
+        open={viewer !== null}
+        onOpenChange={(o) => !o && setViewer(null)}
+      />
+
       <NotesSheet
+
         module={notesFor?.module ?? null}
         open={notesOpen}
         onOpenChange={setNotesOpen}
