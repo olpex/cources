@@ -45,6 +45,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit?: (() => void) | undefined;
+  isTeacher?: boolean;
 };
 
 type Slide = { n: number; title: string; blocks: NoteBlock[]; sources?: string };
@@ -110,7 +111,7 @@ function BlockView({ block }: { block: NoteBlock }) {
   );
 }
 
-export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
+export function NotesSheet({ module, open, onOpenChange, onEdit, isTeacher }: Props) {
   const [builtin, setBuiltin] = useState<SlideNote[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +196,7 @@ export function NotesSheet({ module, open, onOpenChange, onEdit }: Props) {
             Нотатки викладача{all.length ? ` — ${all.length} слайдів` : ""}
           </SheetDescription>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {module?.url && (
+            {module?.url && isTeacher && (
               <Button asChild size="sm" variant="outline">
                 <a href={module.url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="size-4" />
