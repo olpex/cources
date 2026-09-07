@@ -392,10 +392,10 @@ export function CoursesLanding() {
       />
 
       <NotesSheet
-
         module={notesFor?.module ?? null}
         open={notesOpen}
         onOpenChange={setNotesOpen}
+        isTeacher={isTeacher}
         onEdit={
           isTeacher && notesFor
             ? () => {
