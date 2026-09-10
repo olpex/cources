@@ -17,6 +17,10 @@ export type ModuleItem = {
   notesDoc?: ParsedSlide[];
   /** Google Docs tab id this module was imported from */
   sourceTabId?: string;
+  /** link to the PDF/Doc summary shown as "Конспект" */
+  summaryUrl?: string;
+  /** link to the Google Form shown as "Тест" */
+  testUrl?: string;
 };
 
 export type CourseItem = {
@@ -145,6 +149,10 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
 
   const imported: ModuleItem[] = doc.modules.map((m) => {
     const prev = takeMatch(m);
+    const extras = {
+      ...(m.summaryUrl ? { summaryUrl: m.summaryUrl } : {}),
+      ...(m.testUrl ? { testUrl: m.testUrl } : {}),
+    };
     if (!prev) {
       return {
         id: uid(),
@@ -153,21 +161,26 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
         slides: m.slides.length,
         notesDoc: m.slides,
         sourceTabId: m.tabId,
+        ...extras,
       };
     }
     const unchanged =
       prev.title === m.title &&
       prev.url === (m.url || prev.url) &&
       prev.sourceTabId === m.tabId &&
+      (prev.summaryUrl ?? undefined) === m.summaryUrl &&
+      (prev.testUrl ?? undefined) === m.testUrl &&
       sameSlides(prev.notesDoc, m.slides);
     if (unchanged) return prev;
+    const { summaryUrl: _s, testUrl: _t, ...rest } = prev;
     return {
-      ...prev,
+      ...rest,
       title: m.title,
       url: m.url || prev.url || "",
       slides: m.slides.length,
       notesDoc: m.slides,
       sourceTabId: m.tabId,
+      ...extras,
     };
   });
 

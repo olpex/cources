@@ -16,6 +16,10 @@ export type ParsedModule = {
   tabId: string;
   title: string;
   url: string;
+  /** PDF/Google Doc summary ("Конспект") — first link after the notes */
+  summaryUrl?: string;
+  /** Google Form test ("Тест") — second link after the notes */
+  testUrl?: string;
   slides: ParsedSlide[];
 };
 
@@ -104,9 +108,14 @@ function headingLevel(style: string | undefined) {
   return Number.isFinite(n) ? n : 2;
 }
 
+function isFormLink(url: string) {
+  return /forms\.gle|docs\.google\.com\/forms/i.test(url);
+}
+
 function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
   const paragraphs = flatten(tab.documentTab?.body?.content ?? []);
   const slides: ParsedSlide[] = [];
+  const extraLinks: string[] = [];
   let url = "";
   let current: ParsedSlide | null = null;
   let seenHeading = false;
@@ -121,6 +130,12 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
       continue;
     }
     if (!text) continue;
+
+    // Short link-only paragraphs after the notes are the "Конспект" / "Тест" links.
+    if (link && link !== url && (/^https?:\/\/\S+$/.test(text) || text.split(/\s+/).length <= 4)) {
+      extraLinks.push(link);
+      continue;
+    }
 
     if (isHeading(style)) {
       const level = headingLevel(style);
@@ -149,11 +164,17 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
     }
   }
 
+  const tail = extraLinks.slice(-2);
+  const testUrl = tail.find(isFormLink) ?? (tail.length > 1 ? tail[1] : undefined);
+  const summaryUrl = tail.find((l) => l !== testUrl);
+
   const title = tab.tabProperties?.title?.trim() || "Без назви";
   return {
     tabId: tab.tabProperties?.tabId ?? title,
     title: parentTitle ? `${parentTitle} — ${title}` : title,
     url,
+    ...(summaryUrl ? { summaryUrl } : {}),
+    ...(testUrl ? { testUrl } : {}),
     slides: slides.filter((s) => s.blocks.length > 0 || s.title),
   };
 }
