@@ -448,6 +448,13 @@ export function CoursesLanding() {
         onOpenChange={(o) => !o && setViewer(null)}
       />
 
+      <DocViewer
+        title={docView?.title ?? ""}
+        url={docView?.url ?? null}
+        open={docView !== null}
+        onOpenChange={(o) => !o && setDocView(null)}
+      />
+
       <NotesSheet
         module={notesFor?.module ?? null}
         open={notesOpen}
