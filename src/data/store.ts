@@ -172,15 +172,14 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       (prev.testUrl ?? undefined) === m.testUrl &&
       sameSlides(prev.notesDoc, m.slides);
     if (unchanged) return prev;
+    const { summaryUrl: _s, testUrl: _t, ...rest } = prev;
     return {
-      ...prev,
+      ...rest,
       title: m.title,
       url: m.url || prev.url || "",
       slides: m.slides.length,
       notesDoc: m.slides,
       sourceTabId: m.tabId,
-      summaryUrl: m.summaryUrl,
-      testUrl: m.testUrl,
       ...extras,
     };
   });
