@@ -17,6 +17,10 @@ export type ModuleItem = {
   notesDoc?: ParsedSlide[];
   /** Google Docs tab id this module was imported from */
   sourceTabId?: string;
+  /** link to the PDF/Doc summary shown as "Конспект" */
+  summaryUrl?: string;
+  /** link to the Google Form shown as "Тест" */
+  testUrl?: string;
 };
 
 export type CourseItem = {
