@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
+import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocViewer";
 import { PresentationViewer } from "@/components/PresentationViewer";
 
 import { ModuleDialog } from "@/components/ModuleDialog";
