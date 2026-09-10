@@ -78,6 +78,7 @@ export function CoursesLanding() {
   } | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [viewer, setViewer] = useState<{ title: string; url: string } | null>(null);
+  const [docView, setDocView] = useState<{ title: string; url: string } | null>(null);
 
 
   const runImport = useServerFn(importGoogleDoc);
