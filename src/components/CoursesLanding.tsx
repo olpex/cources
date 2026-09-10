@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import {
+  BookOpen,
+  ClipboardCheck,
   ExternalLink,
   FileText,
   FileUp,
@@ -312,6 +314,59 @@ export function CoursesLanding() {
                         <FileText className="size-4" />
                         Нотатки
                       </Button>
+
+                      {m.summaryUrl &&
+                        (isTeacher ? (
+                          <Button asChild size="sm" variant="outline">
+                            <a href={m.summaryUrl} target="_blank" rel="noopener noreferrer">
+                              <BookOpen className="size-4" />
+                              Конспект
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setDocView({
+                                title: `Конспект — ${m.title}`,
+                                url: toReadOnlyDocUrl(m.summaryUrl!),
+                              })
+                            }
+                          >
+                            <BookOpen className="size-4" />
+                            Конспект
+                          </Button>
+                        ))}
+
+                      {m.testUrl &&
+                        (isTeacher ? (
+                          <Button
+                            asChild
+                            size="sm"
+                            className="bg-emerald-600 text-white hover:bg-emerald-700"
+                          >
+                            <a href={m.testUrl} target="_blank" rel="noopener noreferrer">
+                              <ClipboardCheck className="size-4" />
+                              Тест
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="bg-emerald-600 text-white hover:bg-emerald-700"
+                            onClick={() =>
+                              setDocView({
+                                title: `Тест — ${m.title}`,
+                                url: toFormFillUrl(m.testUrl!),
+                              })
+                            }
+                          >
+                            <ClipboardCheck className="size-4" />
+                            Тест
+                          </Button>
+                        ))}
+
                       {edit && (
                         <>
                           <Button
