@@ -16,6 +16,10 @@ export type ParsedModule = {
   tabId: string;
   title: string;
   url: string;
+  /** PDF/Google Doc summary ("Конспект") — first link after the notes */
+  summaryUrl?: string;
+  /** Google Form test ("Тест") — second link after the notes */
+  testUrl?: string;
   slides: ParsedSlide[];
 };
 
