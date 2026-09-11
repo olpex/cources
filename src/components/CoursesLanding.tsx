@@ -288,26 +288,24 @@ export function CoursesLanding() {
                       </div>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-2">
-                      {m.url &&
-                        (isTeacher ? (
-                          <Button asChild size="sm">
-                            <a href={m.url} target="_blank" rel="noopener noreferrer">
-                              <Presentation className="size-4" />
-                              Показати презентацію
-                              <ExternalLink className="size-3.5 opacity-70" />
-                            </a>
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => setViewer({ title: m.title, url: m.url })}
-                          >
-                            <Presentation className="size-4" />
-                            Показати презентацію
-                          </Button>
-                        ))}
+                      {m.url && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            isTeacher
+                              ? window.open(m.url, "_blank", "noopener,noreferrer")
+                              : setViewer({ title: m.title, url: m.url })
+                          }
+                        >
+                          <Presentation className="size-4" />
+                          Показати презентацію
+                          {mounted && isTeacher && (
+                            <ExternalLink className="size-3.5 opacity-70" />
+                          )}
+                        </Button>
+                      )}
 
-                      {isTeacher && (
+                      {mounted && isTeacher && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -321,51 +319,39 @@ export function CoursesLanding() {
                         </Button>
                       )}
 
-                      {m.summaryUrl &&
-                        (isTeacher ? (
-                          <Button asChild size="sm">
-                            <a href={m.summaryUrl} target="_blank" rel="noopener noreferrer">
-                              <BookOpen className="size-4" />
-                              Конспект
-                            </a>
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              setDocView({
-                                title: `Конспект — ${m.title}`,
-                                url: toReadOnlyDocUrl(m.summaryUrl!),
-                              })
-                            }
-                          >
-                            <BookOpen className="size-4" />
-                            Конспект
-                          </Button>
-                        ))}
+                      {m.summaryUrl && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            isTeacher
+                              ? window.open(m.summaryUrl, "_blank", "noopener,noreferrer")
+                              : setDocView({
+                                  title: `Конспект — ${m.title}`,
+                                  url: toReadOnlyDocUrl(m.summaryUrl),
+                                })
+                          }
+                        >
+                          <BookOpen className="size-4" />
+                          Конспект
+                        </Button>
+                      )}
 
-                      {m.testUrl &&
-                        (isTeacher ? (
-                          <Button asChild size="sm">
-                            <a href={m.testUrl} target="_blank" rel="noopener noreferrer">
-                              <ClipboardCheck className="size-4" />
-                              Тест
-                            </a>
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() =>
-                              setDocView({
-                                title: `Тест — ${m.title}`,
-                                url: toFormFillUrl(m.testUrl!),
-                              })
-                            }
-                          >
-                            <ClipboardCheck className="size-4" />
-                            Тест
-                          </Button>
-                        ))}
+                      {m.testUrl && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            isTeacher
+                              ? window.open(m.testUrl, "_blank", "noopener,noreferrer")
+                              : setDocView({
+                                  title: `Тест — ${m.title}`,
+                                  url: toFormFillUrl(m.testUrl),
+                                })
+                          }
+                        >
+                          <ClipboardCheck className="size-4" />
+                          Тест
+                        </Button>
+                      )}
 
 
                       {edit && (
