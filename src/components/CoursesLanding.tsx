@@ -327,7 +327,7 @@ export function CoursesLanding() {
                               ? window.open(m.summaryUrl, "_blank", "noopener,noreferrer")
                               : setDocView({
                                   title: `Конспект — ${m.title}`,
-                                  url: toReadOnlyDocUrl(m.summaryUrl),
+                                  url: toReadOnlyDocUrl(m.summaryUrl!),
                                 })
                           }
                         >
@@ -344,7 +344,7 @@ export function CoursesLanding() {
                               ? window.open(m.testUrl, "_blank", "noopener,noreferrer")
                               : setDocView({
                                   title: `Тест — ${m.title}`,
-                                  url: toFormFillUrl(m.testUrl),
+                                  url: toFormFillUrl(m.testUrl!),
                                 })
                           }
                         >
