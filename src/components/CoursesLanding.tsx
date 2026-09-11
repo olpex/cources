@@ -305,21 +305,23 @@ export function CoursesLanding() {
                           </Button>
                         ))}
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setNotesFor({ course, module: m });
-                          setNotesOpen(true);
-                        }}
-                      >
-                        <FileText className="size-4" />
-                        Нотатки
-                      </Button>
+                      {isTeacher && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setNotesFor({ course, module: m });
+                            setNotesOpen(true);
+                          }}
+                        >
+                          <FileText className="size-4" />
+                          Нотатки
+                        </Button>
+                      )}
 
                       {m.summaryUrl &&
                         (isTeacher ? (
-                          <Button asChild size="sm" variant="outline">
+                          <Button asChild size="sm">
                             <a href={m.summaryUrl} target="_blank" rel="noopener noreferrer">
                               <BookOpen className="size-4" />
                               Конспект
@@ -328,7 +330,6 @@ export function CoursesLanding() {
                         ) : (
                           <Button
                             size="sm"
-                            variant="outline"
                             onClick={() =>
                               setDocView({
                                 title: `Конспект — ${m.title}`,
@@ -343,11 +344,7 @@ export function CoursesLanding() {
 
                       {m.testUrl &&
                         (isTeacher ? (
-                          <Button
-                            asChild
-                            size="sm"
-                            className="bg-emerald-600 text-white hover:bg-emerald-700"
-                          >
+                          <Button asChild size="sm">
                             <a href={m.testUrl} target="_blank" rel="noopener noreferrer">
                               <ClipboardCheck className="size-4" />
                               Тест
@@ -356,7 +353,6 @@ export function CoursesLanding() {
                         ) : (
                           <Button
                             size="sm"
-                            className="bg-emerald-600 text-white hover:bg-emerald-700"
                             onClick={() =>
                               setDocView({
                                 title: `Тест — ${m.title}`,
@@ -368,6 +364,7 @@ export function CoursesLanding() {
                             Тест
                           </Button>
                         ))}
+
 
                       {edit && (
                         <>
