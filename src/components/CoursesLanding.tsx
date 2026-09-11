@@ -66,6 +66,8 @@ export function CoursesLanding() {
   const [editMode, setEditMode] = useState(false);
   const edit = editMode && isTeacher;
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const [notesFor, setNotesFor] = useState<{ course: CourseItem; module: ModuleItem } | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
