@@ -74,14 +74,18 @@ function paragraphText(p: GDocParagraph): string {
     .trim();
 }
 
+function paragraphLinks(p: GDocParagraph): string[] {
+  const out: string[] = [];
+  const add = (u?: string | null) => {
+    if (u && !out.includes(u)) out.push(u);
+  };
+  for (const e of p.elements ?? []) add(e.textRun?.textStyle?.link?.url);
+  for (const m of paragraphText(p).matchAll(/https?:\/\/\S+/g)) add(m[0]);
+  return out;
+}
+
 function paragraphLink(p: GDocParagraph): string | null {
-  for (const e of p.elements ?? []) {
-    const url = e.textRun?.textStyle?.link?.url;
-    if (url) return url;
-  }
-  const text = paragraphText(p);
-  const bare = text.match(/https?:\/\/\S+/);
-  return bare ? bare[0] : null;
+  return paragraphLinks(p)[0] ?? null;
 }
 
 function flatten(content: GDocStructuralElement[]): GDocParagraph[] {
