@@ -9,6 +9,7 @@ import {
   FileUp,
   Link2,
   Loader2,
+  Lock,
   LogIn,
   LogOut,
   Pencil,
@@ -59,6 +60,7 @@ export function CoursesLanding() {
     addModule,
     updateModule,
     removeModule,
+    closeAllModules,
     applyDoc,
     resetAll,
   } = useContent(isTeacher);
@@ -200,6 +202,7 @@ export function CoursesLanding() {
         {courses.map((course, index) => {
         const courseOff = course.active === false;
         const courseLocked = courseOff && !admin;
+        const allModulesClosed = course.modules.every((m) => m.active === false);
         return (
           <section
             key={course.id}
@@ -233,6 +236,16 @@ export function CoursesLanding() {
                       {courseOff ? "Неактивний" : "Активний"}
                     </Label>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={allModulesClosed}
+                    onClick={() => closeAllModules(course.id)}
+                    title={allModulesClosed ? "Усі модулі вже закриті" : "Закрити всі модулі цього курсу"}
+                  >
+                    <Lock className="size-4" />
+                    Закрити модулі
+                  </Button>
                   <Button
                     size="sm"
                     onClick={() =>

@@ -316,6 +316,19 @@ export function useContent(canEdit = false) {
     [mutate],
   );
 
+  const closeAllModules = useCallback(
+    (courseId: string) => {
+      mutate((prev) =>
+        prev.map((c) =>
+          c.id === courseId
+            ? { ...c, modules: c.modules.map((m) => ({ ...m, active: false })) }
+            : c,
+        ),
+      );
+    },
+    [mutate],
+  );
+
   /** Create a course from a Google Doc, or refresh an existing one. */
   const applyDoc = useCallback(
     (doc: ParsedDoc, url: string, courseId?: string) => {
@@ -354,6 +367,7 @@ export function useContent(canEdit = false) {
     addModule,
     updateModule,
     removeModule,
+    closeAllModules,
     applyDoc,
     resetAll,
   };
