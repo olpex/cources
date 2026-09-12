@@ -202,6 +202,7 @@ export function CoursesLanding() {
         {courses.map((course, index) => {
         const courseOff = course.active === false;
         const courseLocked = courseOff && !admin;
+        const allModulesClosed = course.modules.every((m) => m.active === false);
         return (
           <section
             key={course.id}
