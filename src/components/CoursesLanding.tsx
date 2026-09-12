@@ -68,6 +68,7 @@ export function CoursesLanding() {
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const admin = mounted && isTeacher;
 
   const [notesFor, setNotesFor] = useState<{ course: CourseItem; module: ModuleItem } | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
@@ -157,11 +158,23 @@ export function CoursesLanding() {
             слайда відкриваються тут же, у бічній панелі, без переходу в Google Документи.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            {courses.map((c, i) => (
-              <Button key={c.id} asChild variant={i === 0 ? "default" : "outline"}>
-                <a href={`#c-${c.id}`}>{c.title}</a>
-              </Button>
-            ))}
+            {courses.map((c, i) =>
+              !admin && c.active === false ? (
+                <Button
+                  key={c.id}
+                  variant="outline"
+                  disabled
+                  className="opacity-50"
+                  title="Курс поки недоступний"
+                >
+                  {c.title}
+                </Button>
+              ) : (
+                <Button key={c.id} asChild variant={i === 0 ? "default" : "outline"}>
+                  <a href={`#c-${c.id}`}>{c.title}</a>
+                </Button>
+              ),
+            )}
             {edit && (
               <>
                 <Button variant="secondary" onClick={() => setCourseDialog({ course: null })}>
