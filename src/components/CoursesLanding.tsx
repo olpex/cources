@@ -68,6 +68,7 @@ export function CoursesLanding() {
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const admin = mounted && isTeacher;
 
   const [notesFor, setNotesFor] = useState<{ course: CourseItem; module: ModuleItem } | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
@@ -157,11 +158,23 @@ export function CoursesLanding() {
             слайда відкриваються тут же, у бічній панелі, без переходу в Google Документи.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            {courses.map((c, i) => (
-              <Button key={c.id} asChild variant={i === 0 ? "default" : "outline"}>
-                <a href={`#c-${c.id}`}>{c.title}</a>
-              </Button>
-            ))}
+            {courses.map((c, i) =>
+              !admin && c.active === false ? (
+                <Button
+                  key={c.id}
+                  variant="outline"
+                  disabled
+                  className="opacity-50"
+                  title="Курс поки недоступний"
+                >
+                  {c.title}
+                </Button>
+              ) : (
+                <Button key={c.id} asChild variant={i === 0 ? "default" : "outline"}>
+                  <a href={`#c-${c.id}`}>{c.title}</a>
+                </Button>
+              ),
+            )}
             {edit && (
               <>
                 <Button variant="secondary" onClick={() => setCourseDialog({ course: null })}>
@@ -184,8 +197,15 @@ export function CoursesLanding() {
       </header>
 
       <div className="mx-auto max-w-6xl divide-y divide-border px-6">
-        {courses.map((course, index) => (
-          <section key={course.id} id={`c-${course.id}`} className="scroll-mt-24 py-14">
+        {courses.map((course, index) => {
+        const courseOff = course.active === false;
+        const courseLocked = courseOff && !admin;
+        return (
+          <section
+            key={course.id}
+            id={`c-${course.id}`}
+            className={`scroll-mt-24 ${courseLocked ? "py-8 opacity-45" : "py-14"}`}
+          >
             <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
               <div className="max-w-3xl">
                 <Badge variant="secondary" className="mb-3 font-medium">
@@ -202,7 +222,17 @@ export function CoursesLanding() {
                 )}
               </div>
               {edit && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
+                    <Switch
+                      id={`active-${course.id}`}
+                      checked={!courseOff}
+                      onCheckedChange={(v) => updateCourse(course.id, { active: v })}
+                    />
+                    <Label htmlFor={`active-${course.id}`} className="cursor-pointer text-sm">
+                      {courseOff ? "Неактивний" : "Активний"}
+                    </Label>
+                  </div>
                   <Button
                     size="sm"
                     onClick={() =>
@@ -271,10 +301,33 @@ export function CoursesLanding() {
               </div>
             ) : (
               <ol className="grid gap-4 md:grid-cols-2">
-                {course.modules.map((m, i) => (
+                {course.modules.map((m, i) => {
+                  const modOff = m.active === false;
+                  if (!admin && (courseOff || modOff))
+                    return (
+                      <li
+                        key={m.id}
+                        className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 opacity-60"
+                      >
+                        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-semibold text-secondary-foreground">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-semibold leading-snug text-primary">
+                            {m.title}
+                          </h3>
+                          {m.slides ? (
+                            <p className="text-xs text-muted-foreground">{m.slides} слайдів</p>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  return (
                   <li
                     key={m.id}
-                    className="group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-soft transition-shadow hover:shadow-lift"
+                    className={`group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-soft transition-shadow hover:shadow-lift ${
+                      modOff || courseOff ? "opacity-60" : ""
+                    }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-secondary text-sm font-semibold text-secondary-foreground">
@@ -356,6 +409,18 @@ export function CoursesLanding() {
 
                       {edit && (
                         <>
+                          <div className="flex items-center gap-2 rounded-full border border-border px-3 py-1">
+                            <Switch
+                              id={`m-active-${m.id}`}
+                              checked={!modOff}
+                              onCheckedChange={(v) =>
+                                updateModule(course.id, m.id, { active: v })
+                              }
+                            />
+                            <Label htmlFor={`m-active-${m.id}`} className="cursor-pointer text-xs">
+                              {modOff ? "Закритий" : "Відкритий"}
+                            </Label>
+                          </div>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -382,7 +447,8 @@ export function CoursesLanding() {
                       )}
                     </div>
                   </li>
-                ))}
+                  );
+                })}
 
                 {edit && (
                   <li>
@@ -399,7 +465,8 @@ export function CoursesLanding() {
               </ol>
             )}
           </section>
-        ))}
+        );
+        })}
       </div>
 
       <footer className="border-t border-border py-10">

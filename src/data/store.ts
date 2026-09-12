@@ -21,6 +21,8 @@ export type ModuleItem = {
   summaryUrl?: string;
   /** link to the Google Form shown as "Тест" */
   testUrl?: string;
+  /** false = module is shown but locked for students */
+  active?: boolean;
 };
 
 export type CourseItem = {
@@ -29,6 +31,8 @@ export type CourseItem = {
   subtitle: string;
   description: string;
   modules: ModuleItem[];
+  /** false = course is visible but locked for students */
+  active?: boolean;
   /** Google Doc this course was imported from */
   sourceDocId?: string;
   sourceDocUrl?: string;
