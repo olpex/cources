@@ -9,6 +9,7 @@ import {
   FileUp,
   Link2,
   Loader2,
+  Lock,
   LogIn,
   LogOut,
   Pencil,
