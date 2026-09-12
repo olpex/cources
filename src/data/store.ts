@@ -367,6 +367,7 @@ export function useContent(canEdit = false) {
     addModule,
     updateModule,
     removeModule,
+    closeAllModules,
     applyDoc,
     resetAll,
   };
