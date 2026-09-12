@@ -60,6 +60,7 @@ export function CoursesLanding() {
     addModule,
     updateModule,
     removeModule,
+    closeAllModules,
     applyDoc,
     resetAll,
   } = useContent(isTeacher);
