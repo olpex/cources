@@ -238,6 +238,16 @@ export function CoursesLanding() {
                   </div>
                   <Button
                     size="sm"
+                    variant="outline"
+                    disabled={allModulesClosed}
+                    onClick={() => closeAllModules(course.id)}
+                    title={allModulesClosed ? "Усі модулі вже закриті" : "Закрити всі модулі цього курсу"}
+                  >
+                    <Lock className="size-4" />
+                    Закрити модулі
+                  </Button>
+                  <Button
+                    size="sm"
                     onClick={() =>
                       course.sourceDocUrl
                         ? void syncCourse(course)
