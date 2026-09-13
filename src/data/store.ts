@@ -317,6 +317,24 @@ export function useContent(canEdit = false) {
     [mutate],
   );
 
+  /** Move a course to the position of another course (drag & drop reordering). */
+  const moveCourse = useCallback(
+    (fromId: string, toId: string) => {
+      if (fromId === toId) return;
+      mutate((prev) => {
+        const from = prev.findIndex((c) => c.id === fromId);
+        const to = prev.findIndex((c) => c.id === toId);
+        if (from < 0 || to < 0) return prev;
+        const next = [...prev];
+        const moved = next.splice(from, 1)[0];
+        if (!moved) return prev;
+        next.splice(to, 0, moved);
+        return next;
+      });
+    },
+    [mutate],
+  );
+
   const closeAllModules = useCallback(
     (courseId: string) => {
       mutate((prev) =>
