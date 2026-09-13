@@ -99,10 +99,11 @@ function paragraphLinks(p: GDocParagraph): string[] {
 function extractTrailingLinks(
   paragraphs: GDocParagraph[],
   mainUrl: string,
-): { summaryUrl?: string; testUrl?: string } {
+): { summaryUrl?: string | undefined; testUrl?: string | undefined } {
   const links: string[] = [];
   for (let i = paragraphs.length - 1; i >= 0; i--) {
     const p = paragraphs[i];
+    if (!p) continue;
     const text = paragraphText(p);
     const urls = paragraphLinks(p).filter((u) => u !== mainUrl);
     if (urls.length) {
