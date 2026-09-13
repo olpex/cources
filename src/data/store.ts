@@ -154,6 +154,7 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
   const imported: ModuleItem[] = doc.modules.map((m) => {
     const prev = takeMatch(m);
     const extras = {
+      ...(prev ? { active: prev.active } : {}),
       ...(m.summaryUrl ? { summaryUrl: m.summaryUrl } : {}),
       ...(m.testUrl ? { testUrl: m.testUrl } : {}),
     };
