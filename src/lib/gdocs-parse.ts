@@ -84,6 +84,41 @@ function paragraphLink(p: GDocParagraph): string | null {
   return bare ? bare[0] : null;
 }
 
+function paragraphLinks(p: GDocParagraph): string[] {
+  const urls = new Set<string>();
+  for (const e of p.elements ?? []) {
+    const url = e.textRun?.textStyle?.link?.url;
+    if (url) urls.add(url);
+  }
+  const text = paragraphText(p);
+  const bare = text.match(/https?:\/\/\S+/g);
+  if (bare) bare.forEach((u) => urls.add(u));
+  return Array.from(urls);
+}
+
+function extractTrailingLinks(
+  paragraphs: GDocParagraph[],
+  mainUrl: string,
+): { summaryUrl?: string | undefined; testUrl?: string | undefined } {
+  const links: string[] = [];
+  for (let i = paragraphs.length - 1; i >= 0; i--) {
+    const p = paragraphs[i];
+    if (!p) continue;
+    const text = paragraphText(p);
+    const urls = paragraphLinks(p).filter((u) => u !== mainUrl);
+    if (urls.length) {
+      for (const u of urls.reverse()) links.unshift(u);
+      continue;
+    }
+    if (!text) continue;
+    if (text.split(/\s+/).length > 4) break;
+  }
+  const tail = links.slice(-2);
+  const testUrl = tail.find(isFormLink) ?? (tail.length > 1 ? tail[1] : undefined);
+  const summaryUrl = tail.find((l) => l !== testUrl);
+  return { summaryUrl, testUrl };
+}
+
 function flatten(content: GDocStructuralElement[]): GDocParagraph[] {
   const out: GDocParagraph[] = [];
   for (const el of content) {
@@ -115,7 +150,6 @@ function isFormLink(url: string) {
 function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
   const paragraphs = flatten(tab.documentTab?.body?.content ?? []);
   const slides: ParsedSlide[] = [];
-  const extraLinks: string[] = [];
   let url = "";
   let current: ParsedSlide | null = null;
   let seenHeading = false;
@@ -130,12 +164,6 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
       continue;
     }
     if (!text) continue;
-
-    // Short link-only paragraphs after the notes are the "Конспект" / "Тест" links.
-    if (link && link !== url && (/^https?:\/\/\S+$/.test(text) || text.split(/\s+/).length <= 4)) {
-      extraLinks.push(link);
-      continue;
-    }
 
     if (isHeading(style)) {
       const level = headingLevel(style);
@@ -164,9 +192,7 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
     }
   }
 
-  const tail = extraLinks.slice(-2);
-  const testUrl = tail.find(isFormLink) ?? (tail.length > 1 ? tail[1] : undefined);
-  const summaryUrl = tail.find((l) => l !== testUrl);
+  const { summaryUrl, testUrl } = extractTrailingLinks(paragraphs, url);
 
   const title = tab.tabProperties?.title?.trim() || "Без назви";
   return {
