@@ -326,7 +326,8 @@ export function useContent(canEdit = false) {
         const to = prev.findIndex((c) => c.id === toId);
         if (from < 0 || to < 0) return prev;
         const next = [...prev];
-        const [moved] = next.splice(from, 1);
+        const moved = next.splice(from, 1)[0];
+        if (!moved) return prev;
         next.splice(to, 0, moved);
         return next;
       });
