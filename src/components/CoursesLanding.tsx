@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Sparkles,
   Trash2,
+  GripVertical,
 } from "lucide-react";
 import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
