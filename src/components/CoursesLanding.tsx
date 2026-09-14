@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Sparkles,
   Trash2,
+  GripVertical,
 } from "lucide-react";
 import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export function CoursesLanding() {
     closeAllModules,
     applyDoc,
     resetAll,
+    moveCourse,
   } = useContent(isTeacher);
 
   const [editMode, setEditMode] = useState(false);
@@ -106,6 +108,9 @@ export function CoursesLanding() {
       setSyncingId(null);
     }
   };
+
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
 
   const total = courses.reduce((n, c) => n + c.modules.length, 0);
 
@@ -160,23 +165,53 @@ export function CoursesLanding() {
             слайда відкриваються тут же, у бічній панелі, без переходу в Google Документи.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            {courses.map((c, i) =>
-              !admin && c.active === false ? (
-                <Button
+            {courses.map((c, i) => {
+              const chip =
+                !admin && c.active === false ? (
+                  <Button
+                    variant="outline"
+                    disabled
+                    className="opacity-50"
+                    title="Курс поки недоступний"
+                  >
+                    {c.title}
+                  </Button>
+                ) : (
+                  <Button asChild variant={i === 0 ? "default" : "outline"}>
+                    <a href={`#c-${c.id}`}>{c.title}</a>
+                  </Button>
+                );
+              if (!edit) return <div key={c.id}>{chip}</div>;
+              return (
+                <div
                   key={c.id}
-                  variant="outline"
-                  disabled
-                  className="opacity-50"
-                  title="Курс поки недоступний"
+                  draggable
+                  onDragStart={() => setDragId(c.id)}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOverId(null);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    if (dragId && dragId !== c.id) setOverId(c.id);
+                  }}
+                  onDragLeave={() => setOverId((p) => (p === c.id ? null : p))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragId && dragId !== c.id) moveCourse(dragId, c.id);
+                    setDragId(null);
+                    setOverId(null);
+                  }}
+                  title="Перетягніть, щоб змінити порядок курсів"
+                  className={`flex cursor-grab items-center gap-1 rounded-md transition ${
+                    overId === c.id ? "ring-2 ring-primary ring-offset-2" : ""
+                  } ${dragId === c.id ? "opacity-50" : ""}`}
                 >
-                  {c.title}
-                </Button>
-              ) : (
-                <Button key={c.id} asChild variant={i === 0 ? "default" : "outline"}>
-                  <a href={`#c-${c.id}`}>{c.title}</a>
-                </Button>
-              ),
-            )}
+                  <GripVertical className="size-4 text-muted-foreground" />
+                  {chip}
+                </div>
+              );
+            })}
             {edit && (
               <>
                 <Button variant="secondary" onClick={() => setCourseDialog({ course: null })}>

@@ -383,6 +383,7 @@ export function useContent(canEdit = false) {
     addCourse,
     updateCourse,
     removeCourse,
+    moveCourse,
     addModule,
     updateModule,
     removeModule,
