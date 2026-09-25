@@ -63,6 +63,7 @@ export function CoursesLanding() {
     updateModule,
     removeModule,
     closeAllModules,
+    openAllModules,
     applyDoc,
     resetAll,
     moveCourse,
