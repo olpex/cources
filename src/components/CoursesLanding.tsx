@@ -437,6 +437,23 @@ export function CoursesLanding() {
                         </Button>
                       )}
 
+                      {m.selfCheckUrl && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            isTeacher
+                              ? window.open(m.selfCheckUrl, "_blank", "noopener,noreferrer")
+                              : setDocView({
+                                  title: `Самоперевірка — ${m.title}`,
+                                  url: m.selfCheckUrl!,
+                                })
+                          }
+                        >
+                          <ListChecks className="size-4" />
+                          Самоперевірка
+                        </Button>
+                      )}
+
                       {m.testUrl && (
                         <Button
                           size="sm"
