@@ -19,6 +19,8 @@ export type ModuleItem = {
   sourceTabId?: string;
   /** link to the PDF/Doc summary shown as "Конспект" */
   summaryUrl?: string;
+  /** link to the self-check app shown as "Самоперевірка" */
+  selfCheckUrl?: string;
   /** link to the Google Form shown as "Тест" */
   testUrl?: string;
   /** false = module is shown but locked for students */
@@ -156,6 +158,7 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
     const extras = {
       ...(prev ? { active: prev.active } : {}),
       ...(m.summaryUrl ? { summaryUrl: m.summaryUrl } : {}),
+      ...(m.selfCheckUrl ? { selfCheckUrl: m.selfCheckUrl } : {}),
       ...(m.testUrl ? { testUrl: m.testUrl } : {}),
     };
     if (!prev) {
@@ -174,10 +177,11 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       prev.url === (m.url || prev.url) &&
       prev.sourceTabId === m.tabId &&
       (prev.summaryUrl ?? undefined) === m.summaryUrl &&
+      (prev.selfCheckUrl ?? undefined) === m.selfCheckUrl &&
       (prev.testUrl ?? undefined) === m.testUrl &&
       sameSlides(prev.notesDoc, m.slides);
     if (unchanged) return prev;
-    const { summaryUrl: _s, testUrl: _t, ...rest } = prev;
+    const { summaryUrl: _s, selfCheckUrl: _c, testUrl: _t, ...rest } = prev;
     return {
       ...rest,
       title: m.title,

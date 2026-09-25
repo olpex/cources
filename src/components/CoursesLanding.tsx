@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import {
   BookOpen,
   ClipboardCheck,
+  ListChecks,
   ExternalLink,
   FileText,
   FileUp,
@@ -434,6 +435,23 @@ export function CoursesLanding() {
                         >
                           <BookOpen className="size-4" />
                           Конспект
+                        </Button>
+                      )}
+
+                      {m.selfCheckUrl && (
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            isTeacher
+                              ? window.open(m.selfCheckUrl, "_blank", "noopener,noreferrer")
+                              : setDocView({
+                                  title: `Самоперевірка — ${m.title}`,
+                                  url: m.selfCheckUrl!,
+                                })
+                          }
+                        >
+                          <ListChecks className="size-4" />
+                          Самоперевірка
                         </Button>
                       )}
 

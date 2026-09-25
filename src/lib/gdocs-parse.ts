@@ -18,7 +18,9 @@ export type ParsedModule = {
   url: string;
   /** PDF/Google Doc summary ("Конспект") — first link after the notes */
   summaryUrl?: string;
-  /** Google Form test ("Тест") — second link after the notes */
+  /** self-check app ("Самоперевірка") — middle link, optional */
+  selfCheckUrl?: string;
+  /** Google Form test ("Тест") — last link after the notes */
   testUrl?: string;
   slides: ParsedSlide[];
 };
@@ -99,7 +101,7 @@ function paragraphLinks(p: GDocParagraph): string[] {
 function extractTrailingLinks(
   paragraphs: GDocParagraph[],
   mainUrl: string,
-): { summaryUrl?: string | undefined; testUrl?: string | undefined } {
+): { summaryUrl?: string | undefined; selfCheckUrl?: string | undefined; testUrl?: string | undefined } {
   const links: string[] = [];
   for (let i = paragraphs.length - 1; i >= 0; i--) {
     const p = paragraphs[i];
@@ -113,10 +115,15 @@ function extractTrailingLinks(
     if (!text) continue;
     if (text.split(/\s+/).length > 4) break;
   }
-  const tail = links.slice(-2);
-  const testUrl = tail.find(isFormLink) ?? (tail.length > 1 ? tail[1] : undefined);
-  const summaryUrl = tail.find((l) => l !== testUrl);
-  return { summaryUrl, testUrl };
+  const tail = links.slice(-3);
+  const testUrl = tail.find(isFormLink);
+  const summaryUrl = tail.find((l) => l !== testUrl && isGoogleFileLink(l));
+  const selfCheckUrl = tail.find((l) => l !== testUrl && l !== summaryUrl);
+  return { summaryUrl, selfCheckUrl, testUrl };
+}
+
+function isGoogleFileLink(url: string) {
+  return /drive\.google\.com|docs\.google\.com\/(document|file|presentation|spreadsheets)/i.test(url);
 }
 
 function flatten(content: GDocStructuralElement[]): GDocParagraph[] {
@@ -192,7 +199,7 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
     }
   }
 
-  const { summaryUrl, testUrl } = extractTrailingLinks(paragraphs, url);
+  const { summaryUrl, selfCheckUrl, testUrl } = extractTrailingLinks(paragraphs, url);
 
   const title = tab.tabProperties?.title?.trim() || "Без назви";
   return {
@@ -200,6 +207,7 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
     title: parentTitle ? `${parentTitle} — ${title}` : title,
     url,
     ...(summaryUrl ? { summaryUrl } : {}),
+    ...(selfCheckUrl ? { selfCheckUrl } : {}),
     ...(testUrl ? { testUrl } : {}),
     slides: slides.filter((s) => s.blocks.length > 0 || s.title),
   };
