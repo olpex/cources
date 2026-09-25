@@ -352,6 +352,20 @@ export function useContent(canEdit = false) {
     [mutate],
   );
 
+  /** Re-open every module of a course in one step. */
+  const openAllModules = useCallback(
+    (courseId: string) => {
+      mutate((prev) =>
+        prev.map((c) =>
+          c.id === courseId
+            ? { ...c, modules: c.modules.map((m) => ({ ...m, active: true })) }
+            : c,
+        ),
+      );
+    },
+    [mutate],
+  );
+
   /** Create a course from a Google Doc, or refresh an existing one. */
   const applyDoc = useCallback(
     (doc: ParsedDoc, url: string, courseId?: string) => {
@@ -392,6 +406,7 @@ export function useContent(canEdit = false) {
     updateModule,
     removeModule,
     closeAllModules,
+    openAllModules,
     applyDoc,
     resetAll,
   };
