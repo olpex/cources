@@ -276,12 +276,23 @@ export function CoursesLanding() {
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={allModulesClosed}
-                    onClick={() => closeAllModules(course.id)}
-                    title={allModulesClosed ? "Усі модулі вже закриті" : "Закрити всі модулі цього курсу"}
+                    onClick={() =>
+                      allModulesClosed
+                        ? openAllModules(course.id)
+                        : closeAllModules(course.id)
+                    }
+                    title={
+                      allModulesClosed
+                        ? "Відкрити всі модулі цього курсу"
+                        : "Закрити всі модулі цього курсу"
+                    }
                   >
-                    <Lock className="size-4" />
-                    Закрити модулі
+                    {allModulesClosed ? (
+                      <LockOpen className="size-4" />
+                    ) : (
+                      <Lock className="size-4" />
+                    )}
+                    {allModulesClosed ? "Відкрити модулі" : "Закрити модулі"}
                   </Button>
                   <Button
                     size="sm"
