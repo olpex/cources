@@ -11,6 +11,7 @@ import {
   Link2,
   Loader2,
   Lock,
+  LockOpen,
   LogIn,
   LogOut,
   Pencil,
