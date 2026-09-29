@@ -145,7 +145,7 @@ export function CoursesLanding() {
                   title="Email: olppara@gmail.com"
                 >
                   <a href="mailto:olppara@gmail.com">
-                    <Mail className="size-4" />
+                    <GmailIcon className="size-4" />
                   </a>
                 </Button>
                 <Button
