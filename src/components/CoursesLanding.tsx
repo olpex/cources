@@ -25,6 +25,7 @@ import {
   Sparkles,
   Trash2,
   GripVertical,
+  Users,
 } from "lucide-react";
 import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
