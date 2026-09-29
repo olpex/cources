@@ -38,6 +38,8 @@ export type CourseItem = {
   /** Google Doc this course was imported from */
   sourceDocId?: string;
   sourceDocUrl?: string;
+  /** Viber community invite link shown on the course page */
+  viberUrl?: string;
 };
 
 const LEGACY_STORAGE_KEY = "lms-content-v1";
