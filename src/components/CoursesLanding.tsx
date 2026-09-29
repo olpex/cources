@@ -48,6 +48,8 @@ import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocView
 import { PresentationViewer } from "@/components/PresentationViewer";
 
 import { ViberIcon } from "@/components/ViberIcon";
+import { TelegramIcon } from "@/components/TelegramIcon";
+import { GmailIcon } from "@/components/GmailIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
