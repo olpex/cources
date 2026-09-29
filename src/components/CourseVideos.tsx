@@ -52,7 +52,7 @@ export function CourseVideos({ videos, edit, onChange }: Props) {
             videoId: info.videoId,
             url: `https://www.youtube.com/watch?v=${info.videoId}`,
             title: info.title,
-            publishedAt: info.publishedAt ?? undefined,
+            ...(info.publishedAt ? { publishedAt: info.publishedAt } : {}),
           },
         ]),
       );
