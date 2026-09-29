@@ -48,6 +48,8 @@ import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocView
 import { PresentationViewer } from "@/components/PresentationViewer";
 
 import { ViberIcon } from "@/components/ViberIcon";
+import { TelegramIcon } from "@/components/TelegramIcon";
+import { GmailIcon } from "@/components/GmailIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
@@ -143,7 +145,7 @@ export function CoursesLanding() {
                   title="Email: olppara@gmail.com"
                 >
                   <a href="mailto:olppara@gmail.com">
-                    <Mail className="size-4" />
+                    <GmailIcon className="size-4" />
                   </a>
                 </Button>
                 <Button
@@ -165,7 +167,7 @@ export function CoursesLanding() {
                   title="Telegram: @User132309"
                 >
                   <a href="https://t.me/User132309" target="_blank" rel="noopener noreferrer">
-                    <Send className="size-4" />
+                    <TelegramIcon className="size-4" />
                   </a>
                 </Button>
               </div>
