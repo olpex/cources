@@ -14,11 +14,14 @@ import {
   LockOpen,
   LogIn,
   LogOut,
+  Mail,
   Pencil,
+  Phone,
   Plus,
   Presentation,
   RefreshCw,
   RotateCcw,
+  Send,
   Sparkles,
   Trash2,
   GripVertical,
@@ -544,26 +547,58 @@ export function CoursesLanding() {
       </div>
 
       <footer className="border-t border-border py-10">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6">
-          <p className="text-sm text-muted-foreground">
-            Матеріали зберігаються у спільній базі — однакові на всіх комп'ютерах.
-          </p>
-          {edit && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                setConfirm({
-                  title: "Скинути до початкового вмісту?",
-                  description: "Усі ваші зміни буде втрачено.",
-                  action: resetAll,
-                })
-              }
-            >
-              <RotateCcw className="size-4" />
-              Скинути зміни
-            </Button>
-          )}
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">
+              Контакти
+            </h2>
+            <div className="mt-2 flex flex-wrap gap-x-8 gap-y-3">
+              <a
+                href="mailto:olppara@gmail.com"
+                className="inline-flex items-center gap-2 text-sm text-foreground transition-colors hover:text-primary"
+              >
+                <Mail className="size-4 text-muted-foreground" />
+                olppara@gmail.com
+              </a>
+              <a
+                href="viber://chat?number=%2B380975533445"
+                className="inline-flex items-center gap-2 text-sm text-foreground transition-colors hover:text-primary"
+              >
+                <Phone className="size-4 text-muted-foreground" />
+                Viber: +38 097 553 34 45
+              </a>
+              <a
+                href="https://t.me/User132309"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-foreground transition-colors hover:text-primary"
+              >
+                <Send className="size-4 text-muted-foreground" />
+                Telegram: @User132309
+              </a>
+            </div>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6">
+            <p className="text-sm text-muted-foreground">
+              Матеріали зберігаються у спільній базі — однакові на всіх комп'ютерах.
+            </p>
+            {edit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setConfirm({
+                    title: "Скинути до початкового вмісту?",
+                    description: "Усі ваші зміни буде втрачено.",
+                    action: resetAll,
+                  })
+                }
+              >
+                <RotateCcw className="size-4" />
+                Скинути зміни
+              </Button>
+            )}
+          </div>
         </div>
       </footer>
 
