@@ -47,6 +47,7 @@ import { CourseDialog } from "@/components/CourseDialog";
 import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocViewer";
 import { PresentationViewer } from "@/components/PresentationViewer";
 
+import { ViberIcon } from "@/components/ViberIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
@@ -153,7 +154,7 @@ export function CoursesLanding() {
                   title="Viber: +38 097 553 34 45"
                 >
                   <a href="viber://chat?number=%2B380975533445">
-                    <Phone className="size-4" />
+                    <ViberIcon />
                   </a>
                 </Button>
                 <Button
