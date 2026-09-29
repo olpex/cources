@@ -51,6 +51,7 @@ import { ViberIcon } from "@/components/ViberIcon";
 import { TelegramIcon } from "@/components/TelegramIcon";
 import { GmailIcon } from "@/components/GmailIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
+import { CourseVideos } from "@/components/CourseVideos";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
 import { useAuth } from "@/hooks/useAuth";
@@ -416,6 +417,15 @@ export function CoursesLanding() {
                 </Button>
               </div>
             )}
+
+            {!(courseOff && !admin) && (
+              <CourseVideos
+                videos={course.videos ?? []}
+                edit={edit}
+                onChange={(videos) => updateCourse(course.id, { videos })}
+              />
+            )}
+
 
 
             {course.modules.length === 0 && !edit ? (
