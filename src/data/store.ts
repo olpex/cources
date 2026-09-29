@@ -55,6 +55,7 @@ function seed(): CourseItem[] {
     title: c.title,
     subtitle: c.subtitle,
     description: c.description,
+    ...(c.viberUrl ? { viberUrl: c.viberUrl } : {}),
     modules: c.presentations.map((p) => ({
       id: p.id,
       title: p.title,
