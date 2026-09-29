@@ -167,7 +167,7 @@ export function CoursesLanding() {
                   title="Telegram: @User132309"
                 >
                   <a href="https://t.me/User132309" target="_blank" rel="noopener noreferrer">
-                    <Send className="size-4" />
+                    <TelegramIcon className="size-4" />
                   </a>
                 </Button>
               </div>
