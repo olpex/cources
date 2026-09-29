@@ -153,7 +153,7 @@ export function CoursesLanding() {
                   title="Viber: +38 097 553 34 45"
                 >
                   <a href="viber://chat?number=%2B380975533445">
-                    <Phone className="size-4" />
+                    <ViberIcon />
                   </a>
                 </Button>
                 <Button
