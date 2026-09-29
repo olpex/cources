@@ -132,6 +132,41 @@ export function CoursesLanding() {
               Навчальна платформа для викладача
             </p>
             <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  aria-label="Email: olppara@gmail.com"
+                  title="Email: olppara@gmail.com"
+                >
+                  <a href="mailto:olppara@gmail.com">
+                    <Mail className="size-4" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  aria-label="Viber: +38 097 553 34 45"
+                  title="Viber: +38 097 553 34 45"
+                >
+                  <a href="viber://chat?number=%2B380975533445">
+                    <Phone className="size-4" />
+                  </a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="icon"
+                  aria-label="Telegram: @User132309"
+                  title="Telegram: @User132309"
+                >
+                  <a href="https://t.me/User132309" target="_blank" rel="noopener noreferrer">
+                    <Send className="size-4" />
+                  </a>
+                </Button>
+              </div>
               {isTeacher && (
                 <div className="flex items-center gap-3 rounded-full border border-border bg-card px-4 py-2">
                   <Switch id="edit-mode" checked={editMode} onCheckedChange={setEditMode} />
