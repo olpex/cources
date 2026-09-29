@@ -11,6 +11,8 @@ export type Course = {
   subtitle: string;
   description: string;
   presentations: PresentationMeta[];
+  /** Viber community invite shown on the course page */
+  viberUrl?: string;
 };
 
 export type SlideNote = {
