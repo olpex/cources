@@ -31,6 +31,8 @@ export const digitalCourse: Course = {
   slug: "digital",
   title: "Цифровий світ для початківців",
   subtitle: "Базова цифрова грамотність і безпека",
+  viberUrl:
+    "https://invite.viber.com/?g2=AQBm5Zfs4z9kF1c7D1qwc0XxBOeyS0uGyv98LSnroNDnEtbtEsVKSfp13NdSws0M",
   description:
     "Дев’ять готових презентацій для аудиторного заняття: від основ кібербезпеки до державних онлайн-сервісів. Нотатки викладача відкриваються прямо тут, без переходу в Google Документи.",
   presentations: [
