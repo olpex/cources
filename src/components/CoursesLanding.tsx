@@ -391,6 +391,29 @@ export function CoursesLanding() {
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
             )}
 
+            {course.viberUrl && !(courseOff && !admin) && (
+              <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                    <Users className="size-5 text-primary" />
+                  </span>
+                  <div>
+                    <p className="font-semibold">Viber-спільнота курсу</p>
+                    <p className="text-sm text-muted-foreground">
+                      Приєднуйтеся до спільноти «ШІ розвиток кар'єри та профзростання»
+                    </p>
+                  </div>
+                </div>
+                <Button asChild>
+                  <a href={course.viberUrl} target="_blank" rel="noopener noreferrer">
+                    <Users className="size-4" />
+                    Приєднатися
+                    <ExternalLink className="size-3.5 opacity-70" />
+                  </a>
+                </Button>
+              </div>
+            )}
+
 
             {course.modules.length === 0 && !edit ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
