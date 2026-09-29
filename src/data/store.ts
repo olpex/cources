@@ -40,6 +40,16 @@ export type CourseItem = {
   sourceDocUrl?: string;
   /** Viber community invite link shown on the course page */
   viberUrl?: string;
+  /** YouTube recordings, sorted by publish date */
+  videos?: VideoItem[];
+};
+
+export type VideoItem = {
+  id: string;
+  videoId: string;
+  url: string;
+  title: string;
+  publishedAt?: string;
 };
 
 const LEGACY_STORAGE_KEY = "lms-content-v1";
