@@ -202,7 +202,7 @@ export function CoursesLanding() {
 
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] sm:text-6xl">
-            Навчальна платформа для викладача
+            Навчальна платформа викладача
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Один клік — і презентація відкривається для показу на екрані. Нотатки до кожного
