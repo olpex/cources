@@ -52,6 +52,7 @@ import { TelegramIcon } from "@/components/TelegramIcon";
 import { GmailIcon } from "@/components/GmailIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
+import { CourseResults } from "@/components/CourseResults";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
 import { useAuth } from "@/hooks/useAuth";
@@ -425,6 +426,11 @@ export function CoursesLanding() {
                 onChange={(videos) => updateCourse(course.id, { videos })}
               />
             )}
+
+            {!(courseOff && !admin) && course.modules.length > 0 && (
+              <CourseResults modules={course.modules.map((m) => m.title)} />
+            )}
+
 
 
 
