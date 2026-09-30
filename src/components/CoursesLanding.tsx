@@ -133,10 +133,7 @@ export function CoursesLanding() {
     <main className="min-h-screen">
       <header className="surface-grid border-b border-border">
         <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary/70">
-              Навчальна платформа для викладача
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <Button
@@ -205,7 +202,7 @@ export function CoursesLanding() {
 
           </div>
           <h1 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.1] sm:text-6xl">
-            Презентації та нотатки для аудиторних занять
+            Навчальна платформа для викладача
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Один клік — і презентація відкривається для показу на екрані. Нотатки до кожного
