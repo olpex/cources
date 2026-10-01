@@ -124,7 +124,6 @@ export function CoursesLanding() {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
 
-  const total = courses.reduce((n, c) => n + c.modules.length, 0);
 
 
 
@@ -132,7 +131,7 @@ export function CoursesLanding() {
   return (
     <main className="min-h-screen">
       <header className="surface-grid border-b border-border">
-        <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
+        <div className="mx-auto max-w-6xl px-6 pt-20 pb-8 sm:pt-28 sm:pb-10">
             <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5">
@@ -300,9 +299,6 @@ export function CoursesLanding() {
           </div>
           {storageError && <p className="mt-4 text-sm text-destructive">{storageError}</p>}
 
-          <p className="mt-6 text-sm text-muted-foreground">
-            Наразі доступно {total} модулів із нотатками викладача.
-          </p>
         </div>
       </header>
 
