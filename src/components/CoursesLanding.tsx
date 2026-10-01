@@ -223,8 +223,8 @@ export function CoursesLanding() {
           </div>
           <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
             <p className="leading-relaxed text-muted-foreground">
-              Прохання залишити свій відгук щодо навчання. Ваша думка для мене цінна і спонукає
-              до покращення якості викладання. Дякую!
+              Прошу вас поділитися враженнями від навчання. Ваші відгуки допомагають мені
+              вдосконалювати якість викладання. Дякую!
             </p>
             <Button asChild className="mt-3 bg-destructive text-destructive-foreground hover:bg-destructive/90">
               <a
