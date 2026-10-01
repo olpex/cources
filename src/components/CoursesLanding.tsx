@@ -206,7 +206,7 @@ export function CoursesLanding() {
             <br />
             викладача
           </h1>
-          <div className="mt-6 max-w-3xl space-y-3 text-lg leading-relaxed text-muted-foreground">
+          <div className="mt-6 space-y-3 text-lg leading-relaxed text-muted-foreground">
             <p>
               Перехід до курсу відбувається через кнопки в «шапці» проєкту. Кожен курс містить
               покликання на Viber-спільноту курсу, до якої ви можете долучитися й надсилати свої
