@@ -208,6 +208,21 @@ export function CoursesLanding() {
             Один клік — і презентація відкривається для показу на екрані. Нотатки до кожного
             слайда відкриваються тут же, у бічній панелі, без переходу в Google Документи.
           </p>
+          <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-5">
+            <p className="max-w-2xl leading-relaxed text-muted-foreground">
+              Прохання залишити свій відгук щодо навчання. Ваша думка для мене цінна і спонукає
+              до покращення якості викладання. Дякую!
+            </p>
+            <Button asChild className="mt-4 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <a
+                href="https://forms.gle/JrYekGmQTViVPdWV6"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Залиште свій відгук щодо навчання
+              </a>
+            </Button>
+          </div>
           <div className="mt-8 flex flex-wrap gap-3">
             {courses.map((c, i) => {
               const chip =
