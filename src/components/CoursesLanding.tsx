@@ -221,12 +221,12 @@ export function CoursesLanding() {
               оцінювання. Результати цього тесту відображаються в результатах тестів курсу.
             </p>
           </div>
-          <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-5">
-            <p className="max-w-2xl leading-relaxed text-muted-foreground">
+          <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+            <p className="leading-relaxed text-muted-foreground">
               Прохання залишити свій відгук щодо навчання. Ваша думка для мене цінна і спонукає
               до покращення якості викладання. Дякую!
             </p>
-            <Button asChild className="mt-4 bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            <Button asChild className="mt-3 bg-destructive text-destructive-foreground hover:bg-destructive/90">
               <a
                 href="https://forms.gle/JrYekGmQTViVPdWV6"
                 target="_blank"
