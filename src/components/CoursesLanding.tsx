@@ -53,6 +53,7 @@ import { GmailIcon } from "@/components/GmailIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { CourseResults } from "@/components/CourseResults";
+import { ModuleMaterials } from "@/components/ModuleMaterials";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
 import { useAuth } from "@/hooks/useAuth";
@@ -582,6 +583,13 @@ export function CoursesLanding() {
                           Тест
                         </Button>
                       )}
+
+                      <ModuleMaterials
+                        materials={m.materials ?? []}
+                        edit={edit}
+                        onChange={(next) => updateModule(course.id, m.id, { materials: next })}
+                      />
+
 
 
                       {edit && (
