@@ -25,7 +25,11 @@ export type ModuleItem = {
   testUrl?: string;
   /** false = module is shown but locked for students */
   active?: boolean;
+  /** extra links (Drive, OneDrive, Gemini, Claude…) */
+  materials?: MaterialItem[];
 };
+
+export type MaterialItem = { id: string; title: string; url: string };
 
 export type CourseItem = {
   id: string;
