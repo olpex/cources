@@ -2,10 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 const SHEET_ID = "1sLbxZhWvHBfkvhCq_e3r7nAeWxWEwIOYPWiNispyFUc";
-const RANGE = "'_Дані_для_Looker_Studio'!A1:E5000";
+const RANGE = "'_Дані_для_Looker_Studio'!A1:F5000";
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_sheets/v4";
 
-export type ResultRow = { module: string; time: string; score: string; name: string };
+export type ResultRow = { module: string; time: string; score: string; name: string; link?: string };
 
 export function normTitle(s: string) {
   return s.toLowerCase().replace(/[’'`ʼ]/g, "'").replace(/[^\p{L}\p{N}.']+/gu, " ").trim();
@@ -31,5 +31,5 @@ export const fetchCourseResults = createServerFn({ method: "POST" })
     return (json.values ?? [])
       .slice(1)
       .filter((r) => r[0] && wanted.has(normTitle(r[0])))
-      .map((r) => ({ module: r[0] ?? "", time: r[1] ?? "", score: r[2] ?? "", name: r[3] ?? "" }));
+      .map((r) => ({ module: r[0] ?? "", time: r[1] ?? "", score: r[2] ?? "", name: r[3] ?? "", ...(/^https:\/\/docs\.google\.com\/forms\//.test(r[5] ?? "") ? { link: r[5] } : {}) }));
   });
