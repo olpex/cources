@@ -450,7 +450,7 @@ export function CoursesLanding() {
             )}
 
             {!(courseOff && !admin) && course.modules.length > 0 && (
-              <CourseResults modules={course.modules.map((m) => m.title)} />
+              <CourseResults admin={admin} modules={course.modules.map((m) => m.title)} />
             )}
 
 

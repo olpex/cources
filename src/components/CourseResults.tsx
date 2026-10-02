@@ -39,7 +39,7 @@ function displayName(variants: string[]) {
 
 type Group = { key: string; name: string; rows: ResultRow[]; avg: number | null };
 
-export function CourseResults({ modules }: { modules: string[] }) {
+export function CourseResults({ modules, admin = false }: { modules: string[]; admin?: boolean }) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<ResultRow[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -179,7 +179,15 @@ export function CourseResults({ modules }: { modules: string[] }) {
                               <tbody>
                                 {g.rows.map((r, i) => (
                                   <tr key={i} className="border-t border-border first:border-t-0">
-                                    <td className="py-1.5 pl-9 pr-3">{r.module}</td>
+                                    <td className="py-1.5 pl-9 pr-3">
+                                      {admin && r.link ? (
+                                        <a href={r.link} target="_blank" rel="noopener noreferrer" className="text-primary underline-offset-2 hover:underline" title="Відкрити відповідь у Google Формі">
+                                          {r.module}
+                                        </a>
+                                      ) : (
+                                        r.module
+                                      )}
+                                    </td>
                                     <td className="py-1.5 pr-3 font-semibold">{r.score}</td>
                                     <td className="py-1.5 pr-3 whitespace-nowrap text-right text-muted-foreground">
                                       {parseTime(r.time) ? new Date(parseTime(r.time)).toLocaleString("uk-UA") : r.time}
