@@ -46,6 +46,8 @@ export type CourseItem = {
   viberUrl?: string;
   /** YouTube recordings, sorted by publish date */
   videos?: VideoItem[];
+  /** test results removed by the admin (keys from resultKey) */
+  hiddenResults?: string[];
 };
 
 export type VideoItem = {
