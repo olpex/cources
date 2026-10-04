@@ -451,7 +451,16 @@ export function CoursesLanding() {
             )}
 
             {!(courseOff && !admin) && course.modules.length > 0 && (
-              <CourseResults modules={course.modules.map((m) => m.title)} />
+              <CourseResults
+                modules={course.modules.map((m) => m.title)}
+                edit={edit}
+                hidden={course.hiddenResults ?? []}
+                onHide={(keys) =>
+                  updateCourse(course.id, {
+                    hiddenResults: [...new Set([...(course.hiddenResults ?? []), ...keys])],
+                  })
+                }
+              />
             )}
 
 
