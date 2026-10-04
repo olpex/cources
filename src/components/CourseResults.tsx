@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Award, ChevronDown, ChevronRight, Loader2, RefreshCw } from "lucide-react";
+import { Award, ChevronDown, ChevronRight, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCourseResults, type ResultRow } from "@/lib/results.functions";
 
@@ -37,9 +37,23 @@ function displayName(variants: string[]) {
   return best;
 }
 
+export const resultKey = (r: ResultRow) => [r.module, r.time, r.score, r.name].map((x) => x.trim()).join("|");
+
 type Group = { key: string; name: string; rows: ResultRow[]; avg: number | null };
 
-export function CourseResults({ modules }: { modules: string[] }) {
+export function CourseResults({
+  modules,
+  edit = false,
+  hidden = [],
+  onHide,
+}: {
+  modules: string[];
+  edit?: boolean;
+  hidden?: string[];
+  onHide?: (keys: string[]) => void;
+}) {
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<ResultRow[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -74,7 +88,7 @@ export function CourseResults({ modules }: { modules: string[] }) {
 
   const groups = useMemo<Group[]>(() => {
     const shown = (rows ?? []).filter(
-      (r) => !filter || r.module.trim().toLowerCase() === filter.trim().toLowerCase(),
+      (r) => !hiddenSet.has(resultKey(r)) && (!filter || r.module.trim().toLowerCase() === filter.trim().toLowerCase()),
     );
     const map = new Map<string, ResultRow[]>();
     for (const r of shown) {
@@ -92,7 +106,22 @@ export function CourseResults({ modules }: { modules: string[] }) {
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name, "uk-UA"));
-  }, [rows, filter]);
+  }, [rows, filter, hiddenSet]);
+
+  const visibleCount = groups.reduce((a, g) => a + g.rows.length, 0);
+  const pick = (k: string) =>
+    setPicked((s) => {
+      const n = new Set(s);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+  const removePicked = () => {
+    if (!picked.size || !onHide) return;
+    if (!window.confirm(`Видалити позначені результати (${picked.size})?`)) return;
+    onHide([...picked]);
+    setPicked(new Set());
+  };
 
   const flip = (k: string) =>
     setExpanded((s) => {
@@ -112,7 +141,7 @@ export function CourseResults({ modules }: { modules: string[] }) {
       >
         <span className="flex items-center gap-2 font-semibold">
           <Award className="size-5 text-primary" /> Результати тестів курсу
-          {rows && <span className="text-sm font-normal text-muted-foreground">({rows.length})</span>}
+          {rows && <span className="text-sm font-normal text-muted-foreground">({visibleCount})</span>}
         </span>
         <ChevronDown className={`size-5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -143,6 +172,11 @@ export function CourseResults({ modules }: { modules: string[] }) {
                 <Button size="sm" variant="ghost" onClick={() => void fetchRows()} title="Оновити">
                   <RefreshCw className="size-4" />
                 </Button>
+                {edit && picked.size > 0 && (
+                  <Button size="sm" variant="destructive" onClick={removePicked}>
+                    <Trash2 className="size-4" /> Видалити позначені ({picked.size})
+                  </Button>
+                )}
               </div>
               {groups.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Результатів поки немає.</p>
@@ -179,7 +213,18 @@ export function CourseResults({ modules }: { modules: string[] }) {
                               <tbody>
                                 {g.rows.map((r, i) => (
                                   <tr key={i} className="border-t border-border first:border-t-0">
-                                    <td className="py-1.5 pl-9 pr-3">{r.module}</td>
+                                    <td className="py-1.5 pl-9 pr-3">
+                                      {edit && (
+                                        <input
+                                          type="checkbox"
+                                          className="mr-2 align-middle accent-destructive"
+                                          checked={picked.has(resultKey(r))}
+                                          onChange={() => pick(resultKey(r))}
+                                          aria-label="Позначити результат"
+                                        />
+                                      )}
+                                      {r.module}
+                                    </td>
                                     <td className="py-1.5 pr-3 font-semibold">{r.score}</td>
                                     <td className="py-1.5 pr-3 whitespace-nowrap text-right text-muted-foreground">
                                       {parseTime(r.time) ? new Date(parseTime(r.time)).toLocaleString("uk-UA") : r.time}
