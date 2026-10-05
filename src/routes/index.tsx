@@ -6,7 +6,7 @@ const description =
   "Лендінг викладача: презентації курсів «Цифровий світ для початківців» і «Штучний інтелект» відкриваються одним кліком, а нотатки до кожного слайда — просто в проєкті.";
 const url = "https://cources.lovable.app/";
 
-const provider = { "@type": "Person", name: "Олег Паращук", url: "https://oparashchuk.com/" };
+const provider = { "@type": "Organization", name: "Навчальна платформа викладача", url };
 
 export const Route = createFileRoute("/")({
   staticData: { sitemap: true },
