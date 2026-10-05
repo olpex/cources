@@ -26,6 +26,7 @@ import {
   Trash2,
   GripVertical,
   Users,
+  Globe,
 } from "lucide-react";
 import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
@@ -187,6 +188,18 @@ export function CoursesLanding() {
                   >
                     <a href="https://www.youtube.com/@youritperson" target="_blank" rel="noopener noreferrer">
                       <YoutubeIcon className="size-4" />
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    aria-label="Персональний сайт викладача: oparashchuk.com"
+                    title="Персональний сайт викладача: oparashchuk.com"
+                    className="hover:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                  >
+                    <a href="https://oparashchuk.com/" target="_blank" rel="noopener noreferrer">
+                      <Globe className="size-4" />
                     </a>
                   </Button>
                 </div>
@@ -713,6 +726,15 @@ export function CoursesLanding() {
               >
                 <Send className="size-4 text-muted-foreground" />
                 Telegram: @User132309
+              </a>
+              <a
+                href="https://oparashchuk.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-foreground transition-colors hover:text-primary"
+              >
+                <Globe className="size-4 text-muted-foreground" />
+                Персональний сайт: oparashchuk.com
               </a>
             </div>
           </div>
