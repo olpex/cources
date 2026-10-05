@@ -68,6 +68,7 @@ export function ModuleMaterials({
                   href={mat.url}
                   target="_blank"
                   rel="noopener noreferrer"
+                  title={mat.title}
                   className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                 >
                   <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
