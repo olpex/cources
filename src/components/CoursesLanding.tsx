@@ -50,6 +50,7 @@ import { PresentationViewer } from "@/components/PresentationViewer";
 import { ViberIcon } from "@/components/ViberIcon";
 import { TelegramIcon } from "@/components/TelegramIcon";
 import { GmailIcon } from "@/components/GmailIcon";
+import { YoutubeIcon } from "@/components/YoutubeIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { CourseResults } from "@/components/CourseResults";
