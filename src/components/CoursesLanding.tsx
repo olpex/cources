@@ -50,6 +50,7 @@ import { PresentationViewer } from "@/components/PresentationViewer";
 import { ViberIcon } from "@/components/ViberIcon";
 import { TelegramIcon } from "@/components/TelegramIcon";
 import { GmailIcon } from "@/components/GmailIcon";
+import { YoutubeIcon } from "@/components/YoutubeIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { CourseResults } from "@/components/CourseResults";
@@ -174,6 +175,18 @@ export function CoursesLanding() {
                   >
                     <a href="https://t.me/User132309" target="_blank" rel="noopener noreferrer">
                       <TelegramIcon className="size-4" />
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    aria-label="YouTube-канал: @youritperson"
+                    title="YouTube-канал: @youritperson"
+                    className="hover:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                  >
+                    <a href="https://www.youtube.com/@youritperson" target="_blank" rel="noopener noreferrer">
+                      <YoutubeIcon className="size-4" />
                     </a>
                   </Button>
                 </div>
