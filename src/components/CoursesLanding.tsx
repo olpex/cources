@@ -177,6 +177,18 @@ export function CoursesLanding() {
                       <TelegramIcon className="size-4" />
                     </a>
                   </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="icon"
+                    aria-label="YouTube-канал: @youritperson"
+                    title="YouTube-канал: @youritperson"
+                    className="hover:border-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+                  >
+                    <a href="https://www.youtube.com/@youritperson" target="_blank" rel="noopener noreferrer">
+                      <YoutubeIcon className="size-4" />
+                    </a>
+                  </Button>
                 </div>
               </div>
               {isTeacher && (
