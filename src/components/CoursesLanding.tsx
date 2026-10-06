@@ -256,7 +256,9 @@ export function CoursesLanding() {
             </p>
             <p>
               Картки всередині є запланованими для опрацювання заняттями. До кожного з них додано{" "}
-              <span className="font-medium text-destructive">презентацію, конспект, а також тест для самоперевірки та тест для оцінювання</span><sup className="font-bold text-destructive">**</sup>.
+              <span className="font-medium text-destructive">презентацію, конспект, додаткові матеріали, а також тест для самоперевірки</span>{" "}
+              та{" "}
+              <span className="font-medium text-destructive">тест для оцінювання</span><sup className="font-bold text-destructive">**</sup>.
             </p>
             <p>
               Після проходження навчання на курсі ви маєте змогу{" "}
