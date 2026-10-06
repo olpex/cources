@@ -245,7 +245,7 @@ export function CoursesLanding() {
           <div className="mt-6 space-y-2 text-lg leading-snug text-muted-foreground">
             <p>
               Перехід до курсу відбувається за допомогою кнопок у «шапці» проєкту. Кожен курс
-              містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span>,
+              містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span><sup className="font-bold text-destructive">*</sup>,
               до якої ви можете долучитися й надсилати свої запитання.
             </p>
             <p>
