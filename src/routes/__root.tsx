@@ -92,7 +92,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Курси «Цифровий світ для початківців» і «Штучний інтелект»: презентації, конспекти, тести та записи занять.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Навчальна платформа викладача" },
+      { property: "og:site_name", content: "Навчальна платформа викладача з інформаційних технологій Паращука О. Л." },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

@@ -1,4 +1,4 @@
-# Course Navigator
+# Навчальна платформа викладача з інформаційних технологій Паращука О. Л.
 
 З наступного документу https://docs.google.com/document/d/1c8dGUmgmkALnHQlY7v21qN9odjqWvlJf2LYzqandmck/edit?usp=sharing 
 будеш брати ті посилання, які знаходяться вгорі кожної з сторінок цієї презентації.
