@@ -245,7 +245,7 @@ export function CoursesLanding() {
           <div className="mt-6 space-y-2 text-lg leading-snug text-muted-foreground">
             <p>
               Перехід до курсу відбувається за допомогою кнопок у «шапці» проєкту. Кожен курс
-              містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span>,
+              містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span><sup className="font-bold text-destructive">*</sup>,
               до якої ви можете долучитися й надсилати свої запитання.
             </p>
             <p>
@@ -256,13 +256,23 @@ export function CoursesLanding() {
             </p>
             <p>
               Картки всередині є запланованими для опрацювання заняттями. До кожного з них додано{" "}
-              <span className="font-medium text-destructive">презентацію, конспект, а також тести для самоперевірки та оцінювання</span>.
+              <span className="font-medium text-destructive">презентацію, конспект, а також тест для самоперевірки та тест для оцінювання</span><sup className="font-bold text-destructive">**</sup>.
             </p>
             <p>
               Після проходження навчання на курсі ви маєте змогу{" "}
               <span className="font-medium text-destructive">залишити відгук</span> щодо навчання,
               натиснувши кнопку у секції у «шапці проєкту».
             </p>
+            <div className="space-y-0.5 pt-1 text-sm font-bold italic leading-snug text-muted-foreground">
+              <p>
+                <sup className="font-bold text-destructive">*</sup> вкрай важливо приєднатися до цієї
+                Viber-спільноти, щоб підтримувати зв'язок із викладачем курсу
+              </p>
+              <p>
+                <sup className="font-bold text-destructive">**</sup> даний тест є обов'язковим для
+                виконання.
+              </p>
+            </div>
           </div>
           <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
             <p className="leading-relaxed text-muted-foreground">
