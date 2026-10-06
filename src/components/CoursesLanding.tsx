@@ -236,9 +236,11 @@ export function CoursesLanding() {
 
           </div>
           <h1 className="mt-4 text-4xl font-semibold leading-[1.1] sm:text-6xl">
-            Навчальна платформа
+            Навчальна платформа викладача
             <br />
-            викладача
+            <span className="text-2xl font-semibold leading-tight sm:text-4xl">
+              з інформаційних технологій Паращука О. Л.
+            </span>
           </h1>
           <div className="mt-6 space-y-3 text-lg leading-relaxed text-muted-foreground">
             <p>
