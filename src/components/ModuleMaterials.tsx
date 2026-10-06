@@ -51,7 +51,7 @@ export function ModuleMaterials({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button size="sm">
           <Paperclip className="size-4" />
           Додаткові матеріали{materials.length ? ` (${materials.length})` : ""}
           <ChevronDown className="size-3.5" />
