@@ -633,6 +633,7 @@ export function CoursesLanding() {
                       {m.testUrl && (
                         <Button
                           size="sm"
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           onClick={() =>
                             isTeacher
                               ? window.open(m.testUrl, "_blank", "noopener,noreferrer")
