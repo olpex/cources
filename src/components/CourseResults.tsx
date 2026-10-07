@@ -202,6 +202,12 @@ export function CourseResults({
         <span className="flex items-center gap-2 font-semibold">
           <Award className="size-5 text-primary" /> Результати тестів курсу
           {rows && <span className="text-sm font-normal text-muted-foreground">({visibleCount})</span>}
+          {hasNew && (
+            <BellRing
+              className="size-5 animate-bounce text-destructive"
+              aria-label="З'явилися нові результати тестів"
+            />
+          )}
         </span>
         <ChevronDown className={`size-5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>

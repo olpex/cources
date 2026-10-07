@@ -506,6 +506,7 @@ export function CoursesLanding() {
 
             {!(courseOff && !admin) && course.modules.length > 0 && (
               <CourseResults
+                courseId={course.id}
                 modules={course.modules.map((m) => m.title)}
                 edit={edit}
                 hidden={course.hiddenResults ?? []}
