@@ -486,9 +486,9 @@ export function CoursesLanding() {
                     </p>
                   </div>
                 </div>
-                <Button asChild>
+                <Button asChild variant="viber">
                   <a href={course.viberUrl} target="_blank" rel="noopener noreferrer">
-                    <Users className="size-4" />
+                    <ViberIcon className="size-4" color="currentColor" />
                     Приєднатися
                     <ExternalLink className="size-3.5 opacity-70" />
                   </a>
@@ -631,6 +631,12 @@ export function CoursesLanding() {
                         </Button>
                       )}
 
+                      <ModuleMaterials
+                        materials={m.materials ?? []}
+                        edit={edit}
+                        onChange={(next) => updateModule(course.id, m.id, { materials: next })}
+                      />
+
                       {m.testUrl && (
                         <Button
                           size="sm"
@@ -649,11 +655,6 @@ export function CoursesLanding() {
                         </Button>
                       )}
 
-                      <ModuleMaterials
-                        materials={m.materials ?? []}
-                        edit={edit}
-                        onChange={(next) => updateModule(course.id, m.id, { materials: next })}
-                      />
 
 
 

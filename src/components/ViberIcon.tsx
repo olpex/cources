@@ -1,11 +1,17 @@
 import { cn } from '@/lib/utils';
 
-/** Official Viber brand glyph (Simple Icons), filled with the Viber purple. */
-export function ViberIcon({ className }: { className?: string }) {
+/** Official Viber brand glyph (Simple Icons), filled with the Viber purple by default. */
+export function ViberIcon({
+  className,
+  color = "#7360F2",
+}: {
+  className?: string;
+  color?: string;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
-      fill="#7360F2"
+      fill={color}
       aria-hidden="true"
       className={cn('size-4', className)}
     >
