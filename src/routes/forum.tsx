@@ -433,6 +433,24 @@ function ThreadView({
   const [draftTitle, setDraftTitle] = useState("");
   const [draftBody, setDraftBody] = useState("");
   const isAuthor = thread.author_id === userId;
+  const [watching, setWatching] = useState(false);
+  useEffect(() => {
+    if (isAuthor || thread.is_private) return;
+    void supabase.from("thread_watchers").select("thread_id").eq("thread_id", thread.id).eq("user_id", userId)
+      .then(({ data }) => setWatching(!!data?.length));
+  }, [thread.id, userId, isAuthor, thread.is_private]);
+  const toggleWatch = async () => {
+    if (watching) {
+      await supabase.from("thread_watchers").delete().eq("thread_id", thread.id).eq("user_id", userId);
+      setWatching(false);
+    } else {
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await supabase.from("thread_watchers")
+        .insert({ thread_id: thread.id, user_id: userId, email: (u.user?.email ?? "").toLowerCase() });
+      if (error) return alert("Не вдалося підписатися на обговорення.");
+      setWatching(true);
+    }
+  };
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -512,6 +530,11 @@ function ThreadView({
             {isAuthor && (
               <button className={small} onClick={() => startEdit(thread.id, thread.body, thread.title)}>
                 Редагувати
+              </button>
+            )}
+            {!isAuthor && !thread.is_private && (
+              <button className={small} onClick={() => void toggleWatch()}>
+                {watching ? "Відписатися від сповіщень про відповіді" : "Стежити за обговоренням (сповіщення на пошту)"}
               </button>
             )}
           </div>
