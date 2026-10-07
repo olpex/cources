@@ -15,6 +15,13 @@
       "when": 1791373504546,
       "tag": "0001_forum",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791373939612,
+      "tag": "0002_forum_bans_blocks",
+      "breakpoints": true
     }
   ]
 }

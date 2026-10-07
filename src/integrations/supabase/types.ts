@@ -41,6 +41,24 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_bans: {
+        Row: {
+          created_at: string
+          email: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          reason?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       forum_broadcasts: {
         Row: {
           body: string
@@ -160,6 +178,24 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_blocks: {
+        Row: {
+          course_id: string
+          created_at: string
+          email: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          email: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -194,6 +230,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_banned: { Args: never; Returns: boolean }
+      is_sub_blocked: { Args: { _course_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "teacher"
