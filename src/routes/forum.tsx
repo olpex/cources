@@ -665,11 +665,12 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
   const title = (id: string) => courses.find((c) => c.id === id)?.title ?? id;
 
   const forceUnsub = async (s: Sub) => {
-    if (!confirm(`Відписати ${s.email} від курсу «${title(s.course_id)}» без права повторної підписки? Студент також не зможе підписатися на жоден інший курс.`)) return;
+    if (!confirm(`Відписати ${s.email} від курсу «${title(s.course_id)}» без права повторної підписки? Усі інші підписки студента також буде знято, і він не зможе підписатися на жоден курс.`)) return;
     const e = s.email.toLowerCase();
     await supabase.from("subscription_blocks").upsert({ email: e, course_id: s.course_id });
     await supabase.from("subscription_allows").delete().eq("email", e).eq("course_id", s.course_id);
-    await supabase.from("course_subscriptions").delete().eq("id", s.id);
+    const ids = subs.filter((x) => x.email.toLowerCase() === e).map((x) => x.id);
+    await supabase.from("course_subscriptions").delete().in("id", ids.length ? ids : [s.id]);
     void load();
   };
 
