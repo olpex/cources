@@ -242,7 +242,7 @@ export function CoursesLanding() {
               з інформаційних технологій Паращука О. Л.
             </span>
           </h1>
-          <div className="mt-6 space-y-1 text-base leading-tight text-muted-foreground">
+          <div className="mt-6 space-y-3 text-base leading-tight text-muted-foreground">
             <p>
               Перехід до курсу відбувається за допомогою кнопок у «шапці» проєкту. Кожен курс
               містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span><sup className="font-bold text-destructive">*</sup>,
