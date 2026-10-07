@@ -709,6 +709,16 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
     void load();
   };
 
+  const banCourse = async (courseId: string) => {
+    const list = subs.filter((s) => s.course_id === courseId);
+    if (!list.length) return;
+    if (!confirm(`Заблокувати на форумі всіх підписників (${list.length}) курсу «${title(courseId)}»? Інших курсів це не торкнеться, але заблоковані студенти втратять доступ до форуму та всіх своїх підписок.`)) return;
+    const emails = [...new Set(list.map((s) => s.email.toLowerCase()))];
+    await supabase.from("forum_bans").upsert(emails.map((email) => ({ email, reason: `Курс «${title(courseId)}» завершено` })));
+    for (const e of emails) await supabase.from("course_subscriptions").delete().ilike("email", e);
+    void load();
+  };
+
   const ban = async (email: string, reason: string) => {
     const e = email.trim().toLowerCase();
     if (!e.includes("@")) return;
@@ -757,9 +767,14 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
                     {c.title} — підписників: {list.length}
                   </h3>
                   {list.length > 0 && (
-                    <Button size="sm" variant="outline" onClick={() => void forceUnsubCourse(c.id)}>
-                      Відписати всіх (курс завершено)
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" variant="outline" onClick={() => void forceUnsubCourse(c.id)}>
+                        Відписати всіх (курс завершено)
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => void banCourse(c.id)}>
+                        Заблокувати всіх
+                      </Button>
+                    </div>
                   )}
                 </div>
                 <ul className="mt-2 space-y-1">
