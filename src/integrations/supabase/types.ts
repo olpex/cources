@@ -92,6 +92,7 @@ export type Database = {
           author_name: string
           body: string
           created_at: string
+          edited_at: string | null
           id: string
           is_teacher: boolean
           thread_id: string
@@ -101,6 +102,7 @@ export type Database = {
           author_name?: string
           body: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_teacher?: boolean
           thread_id: string
@@ -110,6 +112,7 @@ export type Database = {
           author_name?: string
           body?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_teacher?: boolean
           thread_id?: string
@@ -132,7 +135,9 @@ export type Database = {
           category: string
           course_id: string | null
           created_at: string
+          edited_at: string | null
           id: string
+          is_closed: boolean
           is_private: boolean
           title: string
         }
@@ -143,7 +148,9 @@ export type Database = {
           category?: string
           course_id?: string | null
           created_at?: string
+          edited_at?: string | null
           id?: string
+          is_closed?: boolean
           is_private?: boolean
           title: string
         }
@@ -154,7 +161,9 @@ export type Database = {
           category?: string
           course_id?: string | null
           created_at?: string
+          edited_at?: string | null
           id?: string
+          is_closed?: boolean
           is_private?: boolean
           title?: string
         }
@@ -232,6 +241,7 @@ export type Database = {
       }
       is_banned: { Args: never; Returns: boolean }
       is_sub_blocked: { Args: { _course_id: string }; Returns: boolean }
+      thread_open: { Args: { _thread_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "teacher"
