@@ -69,7 +69,15 @@ export function CourseResults({
   const modulesKey = modules.join("|");
   const hiddenKey = hidden.join("|");
   const busyRef = useRef(false);
+  const mountedRef = useRef(true);
   const latestRef = useRef<ResultRow[] | null>(null);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const maxTime = (list: ResultRow[]) =>
     list.reduce((a, r) => Math.max(a, parseTime(r.time)), 0);
@@ -77,34 +85,24 @@ export function CourseResults({
   // Background check for new test submissions: polls the results sheet
   // once a minute and shows the bell when unseen results appear.
   useEffect(() => {
-    let cancelled = false;
+    const load = resultLoadRef.current;
     const check = async () => {
       if (busyRef.current) return;
       busyRef.current = true;
       try {
-        console.log("[bell] check start", courseId);
         const r = await load({ data: { modules: modulesKey.split("|") } });
-        if (cancelled) {
-          console.log("[bell] cancelled after load", courseId);
-          return;
-        }
-        console.log("[bell] rows:", r.length, courseId);
         const hiddenSetLocal = new Set(hiddenKey ? hiddenKey.split("|") : []);
         const visible = r.filter((row) => !hiddenSetLocal.has(resultKey(row)));
         const latest = maxTime(visible);
-        console.log("[bell] latest:", latest, courseId);
         if (latest) {
           const stored = Number(localStorage.getItem(seenKey) ?? "0");
           if (!stored) {
             localStorage.setItem(seenKey, String(latest));
-            console.log("[bell] stored initial", courseId);
-          } else if (latest > stored) {
+          } else if (latest > stored && mountedRef.current) {
             setHasNew(true);
-            console.log("[bell] NEW detected", courseId);
           }
         }
-      } catch (e) {
-        console.log("[bell] error", courseId, e instanceof Error ? e.message : e);
+      } catch {
         // Silent: the bell is a hint, errors surface when results are opened.
       } finally {
         busyRef.current = false;
@@ -112,11 +110,8 @@ export function CourseResults({
     };
     void check();
     const iv = setInterval(() => void check(), 60000);
-    return () => {
-      cancelled = true;
-      clearInterval(iv);
-    };
-  }, [modulesKey, hiddenKey, seenKey, load]);
+    return () => clearInterval(iv);
+  }, [modulesKey, hiddenKey, seenKey]);
 
   const markSeen = (list: ResultRow[]) => {
     const latest = maxTime(list);
