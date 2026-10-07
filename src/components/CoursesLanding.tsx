@@ -247,7 +247,8 @@ export function CoursesLanding() {
               Перехід до курсу відбувається за допомогою кнопок у «шапці» проєкту. Кожен курс
               містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span><sup className="font-bold text-destructive">*</sup>,
               до якої ви можете долучатися і надсилати свої запитання, а також посилання на
-              окрему Viber-спільноту «База знань», у якій викладач розміщує додаткові матеріали,
+              окрему Viber-спільноту <span className="font-medium text-destructive">«База знань»</span>,
+              у якій викладач розміщує додаткові матеріали,
               що згадуються під час навчання.
             </p>
             <p>
