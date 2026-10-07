@@ -530,3 +530,145 @@ function BroadcastForm({ courses }: { courses: { id: string; title: string }[] }
     </form>
   );
 }
+
+type Sub = { id: string; course_id: string; email: string; name: string };
+type Ban = { email: string; reason: string; created_at: string };
+type Block = { email: string; course_id: string };
+
+function ManageStudents({ courses }: { courses: { id: string; title: string }[] }) {
+  const [subs, setSubs] = useState<Sub[]>([]);
+  const [bans, setBans] = useState<Ban[]>([]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [banEmail, setBanEmail] = useState("");
+  const [banReason, setBanReason] = useState("");
+  const [show, setShow] = useState(false);
+
+  const load = useCallback(async () => {
+    const [s, b, k] = await Promise.all([
+      supabase.from("course_subscriptions").select("id, course_id, email, name").order("email"),
+      supabase.from("forum_bans").select("*").order("created_at", { ascending: false }),
+      supabase.from("subscription_blocks").select("email, course_id"),
+    ]);
+    setSubs((s.data as Sub[]) ?? []);
+    setBans((b.data as Ban[]) ?? []);
+    setBlocks((k.data as Block[]) ?? []);
+  }, []);
+
+  useEffect(() => {
+    if (show) void load();
+  }, [show, load]);
+
+  const title = (id: string) => courses.find((c) => c.id === id)?.title ?? id;
+
+  const forceUnsub = async (s: Sub) => {
+    if (!confirm(`Відписати ${s.email} від курсу «${title(s.course_id)}» без права повторної підписки?`)) return;
+    await supabase.from("subscription_blocks").insert({ email: s.email.toLowerCase(), course_id: s.course_id });
+    await supabase.from("course_subscriptions").delete().eq("id", s.id);
+    void load();
+  };
+
+  const forceUnsubCourse = async (courseId: string) => {
+    const list = subs.filter((s) => s.course_id === courseId);
+    if (!list.length) return;
+    if (!confirm(`Відписати всіх (${list.length}) від курсу «${title(courseId)}» без права повторної підписки?`)) return;
+    await supabase
+      .from("subscription_blocks")
+      .upsert(list.map((s) => ({ email: s.email.toLowerCase(), course_id: courseId })));
+    await supabase.from("course_subscriptions").delete().eq("course_id", courseId);
+    void load();
+  };
+
+  const ban = async (email: string, reason: string) => {
+    const e = email.trim().toLowerCase();
+    if (!e.includes("@")) return;
+    if (!confirm(`Назавжди заблокувати ${e} на форумі?`)) return;
+    await supabase.from("forum_bans").upsert({ email: e, reason: reason.trim() });
+    await supabase.from("course_subscriptions").delete().ilike("email", e);
+    setBanEmail("");
+    setBanReason("");
+    void load();
+  };
+
+  const unban = async (email: string) => {
+    if (!confirm(`Зняти блокування з ${email}?`)) return;
+    await supabase.from("forum_bans").delete().eq("email", email);
+    void load();
+  };
+
+  return (
+    <section className="mt-6 rounded-2xl border border-border bg-card p-5">
+      <button className="flex w-full items-center justify-between font-semibold" onClick={() => setShow(!show)}>
+        Керування підписниками та блокуваннями
+        <span className="text-sm text-muted-foreground">{show ? "Згорнути" : "Розгорнути"}</span>
+      </button>
+      {show && (
+        <div className="mt-4 space-y-6">
+          {courses.map((c) => {
+            const list = subs.filter((s) => s.course_id === c.id);
+            const blockedList = blocks.filter((b) => b.course_id === c.id);
+            return (
+              <div key={c.id}>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-sm font-semibold">
+                    {c.title} — підписників: {list.length}
+                  </h3>
+                  {list.length > 0 && (
+                    <Button size="sm" variant="outline" onClick={() => void forceUnsubCourse(c.id)}>
+                      Відписати всіх (курс завершено)
+                    </Button>
+                  )}
+                </div>
+                <ul className="mt-2 space-y-1">
+                  {list.map((s) => (
+                    <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary px-3 py-2 text-sm">
+                      <span>
+                        {s.name} · {s.email}
+                      </span>
+                      <span className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => void forceUnsub(s)}>
+                          Відписати назавжди
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => void ban(s.email, "")}>
+                          Заблокувати
+                        </Button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {blockedList.length > 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Відписані без права повторної підписки: {blockedList.map((b) => b.email).join(", ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold">Заблокувати адресу на форумі</h3>
+            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <Input type="email" placeholder="email@gmail.com" value={banEmail} onChange={(e) => setBanEmail(e.target.value)} />
+              <Input placeholder="Причина (необов'язково)" value={banReason} onChange={(e) => setBanReason(e.target.value)} />
+              <Button variant="destructive" onClick={() => void ban(banEmail, banReason)}>
+                Заблокувати
+              </Button>
+            </div>
+            <ul className="mt-3 space-y-1">
+              {bans.map((b) => (
+                <li key={b.email} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-destructive/5 px-3 py-2 text-sm">
+                  <span>
+                    {b.email}
+                    {b.reason && <span className="text-muted-foreground"> — {b.reason}</span>}
+                  </span>
+                  <Button size="sm" variant="outline" onClick={() => void unban(b.email)}>
+                    Зняти блокування
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
