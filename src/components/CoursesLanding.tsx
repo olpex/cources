@@ -488,7 +488,7 @@ export function CoursesLanding() {
                 </div>
                 <Button asChild variant="viber">
                   <a href={course.viberUrl} target="_blank" rel="noopener noreferrer">
-                    <ViberIcon className="size-4" />
+                    <ViberIcon className="size-4" color="currentColor" />
                     Приєднатися
                     <ExternalLink className="size-3.5 opacity-70" />
                   </a>
