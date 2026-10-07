@@ -509,17 +509,6 @@ export function CoursesLanding() {
                       </Button>
                     </span>
                   ))}
-                  {edit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCourseDialog({ course })}
-                      title="Змінити посилання на спільноту курсу та базу знань"
-                    >
-                      <Pencil className="size-4" />
-                      Редагувати посилання
-                    </Button>
-                  )}
                 </div>
               </div>
             )}
