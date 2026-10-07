@@ -10,20 +10,43 @@ const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
 const header = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
 
-async function sendGmail(to: string, subject: string, text: string) {
+async function sendGmail(
+  to: string,
+  subject: string,
+  text: string,
+  options: { senderName?: string; html?: string } = {},
+) {
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const gmailKey = process.env["GOOGLE_MAIL_API_KEY"];
   if (!lovableKey || !gmailKey) throw new Error("Пошту не налаштовано");
+  const boundary = `forum-${crypto.randomUUID()}`;
+  const mimeBody = options.html
+    ? [
+        `--${boundary}`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "Content-Transfer-Encoding: base64",
+        "",
+        b64(text),
+        `--${boundary}`,
+        'Content-Type: text/html; charset="UTF-8"',
+        "Content-Transfer-Encoding: base64",
+        "",
+        b64(options.html),
+        `--${boundary}--`,
+      ].join("\r\n")
+    : b64(text);
   const raw = b64(
     [
-      `From: ${header(SENDER_NAME)} <${TEACHER_EMAIL}>`,
+      `From: ${header(options.senderName ?? SENDER_NAME)} <${TEACHER_EMAIL}>`,
       `To: ${to}`,
       `Subject: ${header(subject)}`,
       "MIME-Version: 1.0",
-      'Content-Type: text/plain; charset="UTF-8"',
-      "Content-Transfer-Encoding: base64",
+      options.html
+        ? `Content-Type: multipart/alternative; boundary="${boundary}"`
+        : 'Content-Type: text/plain; charset="UTF-8"',
+      ...(options.html ? [] : ["Content-Transfer-Encoding: base64"]),
       "",
-      b64(text),
+      mimeBody,
     ].join("\r\n"),
   )
     .replace(/\+/g, "-")
@@ -43,6 +66,15 @@ async function sendGmail(to: string, subject: string, text: string) {
     console.error(`Gmail send failed [${res.status}]: ${body}`);
     throw new Error(`Не вдалося надіслати лист [${res.status}]`);
   }
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+    };
+    return entities[character] ?? character;
+  });
 }
 
 function forumUrl() {
@@ -134,13 +166,17 @@ export const sendBroadcast = createServerFn({ method: "POST" })
       .eq("course_id", data.courseId);
     if (error) throw error;
     const emails = [...new Set((subs ?? []).map((s) => s.email.toLowerCase()))];
+    const url = forumUrl();
+    const signature = "Ваш викладач, Паращук Олег Леонідович";
+    const html = `<html lang="uk"><body><p>${escapeHtml(data.body).replace(/\r?\n/g, "<br>")}</p><p>—<br><em>${signature}<br>Форум курсу: <a href="${escapeHtml(url)}">${escapeHtml(url)}</a></em></p></body></html>`;
     let sent = 0;
     for (const email of emails) {
       try {
         await sendGmail(
           email,
           `[${data.courseTitle}] ${data.subject}`,
-          `${data.body}\n\n—\nПаращук О. Л.\nФорум курсу: ${forumUrl()}`,
+          `${data.body}\n\n—\n${signature}\nФорум курсу: ${url}`,
+          { senderName: `${data.courseTitle}, повідомлення`, html },
         );
         sent++;
       } catch (e) {

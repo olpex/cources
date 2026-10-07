@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Store both course-community and knowledge-base URLs as optional course-content fields edited through CourseDialog; the existing shared content persistence keeps them consistent across devices and Google Doc refreshes.
+- Send formatted forum broadcasts as multipart/alternative with escaped HTML and a plain-text fallback so email clients retain readable content.
