@@ -14,6 +14,134 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_subscriptions: {
+        Row: {
+          course_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      forum_broadcasts: {
+        Row: {
+          body: string
+          course_id: string | null
+          created_at: string
+          id: string
+          sent_count: number
+          subject: string
+        }
+        Insert: {
+          body: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          sent_count?: number
+          subject: string
+        }
+        Update: {
+          body?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          sent_count?: number
+          subject?: string
+        }
+        Relationships: []
+      }
+      forum_replies: {
+        Row: {
+          author_id: string
+          author_name: string
+          body: string
+          created_at: string
+          id: string
+          is_teacher: boolean
+          thread_id: string
+        }
+        Insert: {
+          author_id: string
+          author_name?: string
+          body: string
+          created_at?: string
+          id?: string
+          is_teacher?: boolean
+          thread_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          body?: string
+          created_at?: string
+          id?: string
+          is_teacher?: boolean
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_replies_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "forum_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_threads: {
+        Row: {
+          author_id: string
+          author_name: string
+          body: string
+          category: string
+          course_id: string | null
+          created_at: string
+          id: string
+          is_private: boolean
+          title: string
+        }
+        Insert: {
+          author_id: string
+          author_name?: string
+          body: string
+          category?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          title: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          body?: string
+          category?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           data: Json
@@ -58,6 +186,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_thread: { Args: { _thread_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
