@@ -88,7 +88,8 @@ function ForumPage() {
 
   const load = useCallback(async () => {
     if (!user) return;
-    const [t, r, s, b, ban] = await Promise.all([
+    const em = (user.email ?? "").toLowerCase();
+    const [t, r, s, b, ban, al] = await Promise.all([
       supabase.from("forum_threads").select("*").order("created_at", { ascending: false }),
       supabase.from("forum_replies").select("*").order("created_at"),
       supabase.from("course_subscriptions").select("course_id").eq("user_id", user.id),
@@ -97,13 +98,16 @@ function ForumPage() {
         .select("course_id")
         .eq("email", (user.email ?? "").toLowerCase()),
       supabase.rpc("is_banned"),
+      supabase.from("subscription_allows").select("course_id").eq("email", em),
     ]);
     setThreads((t.data as Thread[]) ?? []);
     setReplies((r.data as Reply[]) ?? []);
     setSubs((s.data ?? []).map((x) => x.course_id));
-    setBlocked((b.data ?? []).map((x) => x.course_id));
+    const allowed = (al.data ?? []).map((x) => x.course_id);
+    // Excluded from any course → no self-subscription anywhere except courses the teacher re-allowed.
+    setBlocked((b.data ?? []).length ? courses.map((c) => c.id).filter((id) => !allowed.includes(id)) : []);
     setBanned(!!ban.data);
-  }, [user]);
+  }, [user, courses]);
 
   useEffect(() => {
     void load();
@@ -203,7 +207,7 @@ function ForumPage() {
                   blocked.includes(c.id) ? (
                     <p key={c.id} className="flex items-center gap-3 text-sm text-muted-foreground">
                       <Switch checked={false} disabled />
-                      {c.title} — підписку закрито викладачем
+                      {c.title} — підписка недоступна (вас виключено викладачем)
                     </p>
                   ) : (
                     <label key={c.id} className="flex items-center gap-3 text-sm">
@@ -369,7 +373,7 @@ function NewThreadForm({
 
   return (
     <form onSubmit={submit} className="mt-6 space-y-3 rounded-2xl border border-border bg-card p-5">
-      <h2 className="font-semibold">Нове звернення</h2>
+      <h2 className="font-semibold">Нове повідомлення</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <select
           className="rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -634,16 +638,21 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
   const [subs, setSubs] = useState<Sub[]>([]);
   const [bans, setBans] = useState<Ban[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
+  const [allows, setAllows] = useState<Block[]>([]);
+  const [allowEmail, setAllowEmail] = useState("");
+  const [allowCourse, setAllowCourse] = useState(courses[0]?.id ?? "");
   const [banEmail, setBanEmail] = useState("");
   const [banReason, setBanReason] = useState("");
   const [show, setShow] = useState(false);
 
   const load = useCallback(async () => {
-    const [s, b, k] = await Promise.all([
+    const [s, b, k, a] = await Promise.all([
       supabase.from("course_subscriptions").select("id, course_id, email, name").order("email"),
       supabase.from("forum_bans").select("*").order("created_at", { ascending: false }),
       supabase.from("subscription_blocks").select("email, course_id"),
+      supabase.from("subscription_allows").select("email, course_id").order("email"),
     ]);
+    setAllows((a.data as Block[]) ?? []);
     setSubs((s.data as Sub[]) ?? []);
     setBans((b.data as Ban[]) ?? []);
     setBlocks((k.data as Block[]) ?? []);
@@ -656,8 +665,10 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
   const title = (id: string) => courses.find((c) => c.id === id)?.title ?? id;
 
   const forceUnsub = async (s: Sub) => {
-    if (!confirm(`Відписати ${s.email} від курсу «${title(s.course_id)}» без права повторної підписки?`)) return;
-    await supabase.from("subscription_blocks").insert({ email: s.email.toLowerCase(), course_id: s.course_id });
+    if (!confirm(`Відписати ${s.email} від курсу «${title(s.course_id)}» без права повторної підписки? Студент також не зможе підписатися на жоден інший курс.`)) return;
+    const e = s.email.toLowerCase();
+    await supabase.from("subscription_blocks").upsert({ email: e, course_id: s.course_id });
+    await supabase.from("subscription_allows").delete().eq("email", e).eq("course_id", s.course_id);
     await supabase.from("course_subscriptions").delete().eq("id", s.id);
     void load();
   };
@@ -670,6 +681,7 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
       .from("subscription_blocks")
       .upsert(list.map((s) => ({ email: s.email.toLowerCase(), course_id: courseId })));
     await supabase.from("course_subscriptions").delete().eq("course_id", courseId);
+    await supabase.from("subscription_allows").delete().eq("course_id", courseId);
     void load();
   };
 
@@ -681,6 +693,19 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
     await supabase.from("course_subscriptions").delete().ilike("email", e);
     setBanEmail("");
     setBanReason("");
+    void load();
+  };
+
+  const allow = async () => {
+    const e = allowEmail.trim().toLowerCase();
+    if (!e.includes("@") || !allowCourse) return;
+    await supabase.from("subscription_allows").upsert({ email: e, course_id: allowCourse });
+    setAllowEmail("");
+    void load();
+  };
+
+  const disallow = async (a: Block) => {
+    await supabase.from("subscription_allows").delete().eq("email", a.email).eq("course_id", a.course_id);
     void load();
   };
 
@@ -738,6 +763,30 @@ function ManageStudents({ courses }: { courses: { id: string; title: string }[] 
               </div>
             );
           })}
+
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold">Дозволити підписку виключеному студенту</h3>
+            <p className="text-xs text-muted-foreground">
+              Студент, виключений з будь-якого курсу, не може підписатися на жоден курс. Вкажіть його Gmail і новий курс — тоді він зможе ввімкнути підписку саме на цей курс.
+            </p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <Input type="email" placeholder="email@gmail.com" value={allowEmail} onChange={(e) => setAllowEmail(e.target.value)} />
+              <select className="h-9 rounded-md border border-input bg-background px-3 text-sm" value={allowCourse} onChange={(e) => setAllowCourse(e.target.value)}>
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>{c.title}</option>
+                ))}
+              </select>
+              <Button onClick={() => void allow()}>Дозволити</Button>
+            </div>
+            <ul className="mt-3 space-y-1">
+              {allows.map((a) => (
+                <li key={a.email + a.course_id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary px-3 py-2 text-sm">
+                  <span>{a.email} → {title(a.course_id)}</span>
+                  <Button size="sm" variant="outline" onClick={() => void disallow(a)}>Скасувати дозвіл</Button>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           <div className="border-t border-border pt-4">
             <h3 className="text-sm font-semibold">Заблокувати адресу на форумі</h3>

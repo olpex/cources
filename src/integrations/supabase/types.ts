@@ -187,6 +187,24 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_allows: {
+        Row: {
+          course_id: string
+          created_at: string
+          email: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          email: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          email?: string
+        }
+        Relationships: []
+      }
       subscription_blocks: {
         Row: {
           course_id: string
