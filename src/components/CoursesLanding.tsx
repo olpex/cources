@@ -293,7 +293,7 @@ export function CoursesLanding() {
                 Залиште свій відгук щодо навчання
               </a>
             </Button>
-            <Button asChild variant="outline" className="ml-2 mt-3">
+            <Button asChild className="ml-2 mt-3 bg-destructive text-destructive-foreground hover:bg-destructive/90">
               <Link to="/forum">Форум: запитання й оголошення</Link>
             </Button>
 

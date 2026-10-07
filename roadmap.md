@@ -1,0 +1,4 @@
+- [x] Match the forum button to the adjacent feedback button.
+- [x] Format broadcast signature and forum link in italics; use the course name in the sender display name.
+- [x] Check recipient-side importance and stars: Gmail controls these in the recipient mailbox; sender cannot force them.
+- [ ] Verify button appearance and encoded email content without sending a real email.
