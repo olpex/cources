@@ -30,6 +30,8 @@
 
   --color-highlight: var(--highlight);
   --color-highlight-foreground: var(--highlight-foreground);
+  --color-viber: var(--viber);
+  --color-viber-foreground: var(--viber-foreground);
   --shadow-soft: 0 1px 2px oklch(0.25 0.05 190 / 0.06), 0 12px 32px -12px oklch(0.25 0.05 190 / 0.18);
   --shadow-lift: 0 2px 6px oklch(0.25 0.05 190 / 0.08), 0 24px 48px -18px oklch(0.25 0.05 190 / 0.28);
   --radius-sm: calc(var(--radius) - 4px);
@@ -95,6 +97,8 @@
   --brand-foreground: oklch(0.985 0.01 95);
   --highlight: oklch(0.78 0.145 72);
   --highlight-foreground: oklch(0.26 0.05 60);
+  --viber: oklch(0.588 0.21 283.77);
+  --viber-foreground: oklch(0.99 0 0);
   --paper: oklch(1 0 0);
   --paper-foreground: oklch(0.21 0 0);
   --paper-muted: oklch(0.45 0 0);
@@ -158,6 +162,8 @@
   --brand-foreground: oklch(0.16 0.03 195);
   --highlight: oklch(0.78 0.145 72);
   --highlight-foreground: oklch(0.2 0.04 60);
+  --viber: oklch(0.66 0.19 283.77);
+  --viber-foreground: oklch(0.16 0.02 285);
   --paper: oklch(1 0 0);
   --paper-foreground: oklch(0.21 0 0);
   --paper-muted: oklch(0.45 0 0);
