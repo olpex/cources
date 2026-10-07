@@ -64,6 +64,8 @@ export function CourseResults({
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [hasNew, setHasNew] = useState(false);
   const load = useServerFn(fetchCourseResults);
+  const resultLoadRef = useRef(load);
+  resultLoadRef.current = load;
 
   const seenKey = `resultsSeen:${courseId}`;
   const modulesKey = modules.join("|");
