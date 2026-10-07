@@ -293,6 +293,10 @@ export function CoursesLanding() {
                 Залиште свій відгук щодо навчання
               </a>
             </Button>
+            <Button asChild variant="outline" className="ml-2 mt-3">
+              <Link to="/forum">Форум: запитання й оголошення</Link>
+            </Button>
+
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             {courses.map((c, i) => {
