@@ -94,7 +94,7 @@ export function CourseVideos({ videos, edit, onChange }: Props) {
   };
 
   return (
-    <div className="mb-8 rounded-2xl border border-border bg-card shadow-soft">
+    <div className="mb-4 rounded-2xl border border-border bg-card shadow-soft">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

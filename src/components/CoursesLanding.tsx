@@ -27,6 +27,7 @@ import {
   GripVertical,
   Users,
   Globe,
+  MessagesSquare,
 } from "lucide-react";
 import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
@@ -250,6 +251,7 @@ export function CoursesLanding() {
               окрему Viber-спільноту <span className="font-medium text-destructive">«База знань»</span>,
               у якій викладач розміщує додаткові матеріали,
               що згадуються під час навчання.
+              {" "}На початку кожного курсу є <span className="font-medium text-destructive">форум</span> для запитань, обговорень і повідомлень викладача.
             </p>
             <p>
               Крім того, у верхній частині сторінки є{" "}
@@ -292,9 +294,6 @@ export function CoursesLanding() {
               >
                 Залиште свій відгук щодо навчання
               </a>
-            </Button>
-            <Button asChild className="ml-2 mt-3 bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              <Link to="/forum">Форум: запитання й оголошення</Link>
             </Button>
 
           </div>
@@ -480,8 +479,30 @@ export function CoursesLanding() {
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
             )}
 
+            {!courseLocked && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
+                <div className="flex min-w-0 flex-1 basis-80 items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-forum/10">
+                    <MessagesSquare className="size-5 text-forum" />
+                  </span>
+                  <div>
+                    <p className="font-semibold">Форум курсу — запитання й оголошення</p>
+                    <p className="text-sm text-muted-foreground">
+                      Запитання за темами курсу, обговорення зі студентами та організаційні повідомлення викладача.
+                    </p>
+                  </div>
+                </div>
+                <Button asChild variant="forum" size="sm" className="shrink-0">
+                  <Link to="/forum">
+                    <MessagesSquare />
+                    Перейти до форуму
+                  </Link>
+                </Button>
+              </div>
+            )}
+
             {(course.viberUrl || course.knowledgeBaseUrl || edit) && !(courseOff && !admin) && (
-              <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
                 <div className="flex min-w-0 flex-1 basis-80 items-center gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
                     <Users className="size-5 text-primary" />

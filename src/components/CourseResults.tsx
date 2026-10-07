@@ -198,7 +198,7 @@ export function CourseResults({
     });
 
   return (
-    <div className="mb-6 rounded-2xl border border-border bg-card">
+    <div className="mb-3 rounded-2xl border border-border bg-card">
       <button
         type="button"
         onClick={toggle}
