@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronDown, Loader2, Plus, Trash2, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,35 @@ export function CourseVideos({ videos, edit, onChange }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const getInfo = useServerFn(fetchYoutubeInfo);
-  const list = sortVideos(videos);
+  const [found, setFound] = useState<Record<string, string>>({});
+  const tried = useRef(new Set<string>());
+
+  // Fill in missing publish dates for videos added earlier.
+  useEffect(() => {
+    const missing = videos.filter((v) => !v.publishedAt && !tried.current.has(v.videoId));
+    if (missing.length === 0) return;
+    missing.forEach((v) => tried.current.add(v.videoId));
+    void (async () => {
+      const got: Record<string, string> = {};
+      for (const v of missing) {
+        try {
+          const info = await getInfo({ data: { url: v.url } });
+          if (info.publishedAt) got[v.videoId] = info.publishedAt;
+        } catch {
+          /* ignore */
+        }
+      }
+      if (Object.keys(got).length === 0) return;
+      setFound((f) => ({ ...f, ...got }));
+      if (edit) {
+        onChange(videos.map((v) => { const p = got[v.videoId]; return p ? { ...v, publishedAt: p } : v; }));
+      }
+    })();
+  }, [videos, edit, getInfo, onChange]);
+
+  const list = sortVideos(
+    videos.map((v) => { const p = found[v.videoId]; return !v.publishedAt && p ? { ...v, publishedAt: p } : v; }),
+  );
 
   if (!edit && list.length === 0) return null;
 
