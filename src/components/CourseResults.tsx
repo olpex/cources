@@ -82,20 +82,29 @@ export function CourseResults({
       if (busyRef.current) return;
       busyRef.current = true;
       try {
+        console.log("[bell] check start", courseId);
         const r = await load({ data: { modules: modulesKey.split("|") } });
-        if (cancelled) return;
+        if (cancelled) {
+          console.log("[bell] cancelled after load", courseId);
+          return;
+        }
+        console.log("[bell] rows:", r.length, courseId);
         const hiddenSetLocal = new Set(hiddenKey ? hiddenKey.split("|") : []);
         const visible = r.filter((row) => !hiddenSetLocal.has(resultKey(row)));
         const latest = maxTime(visible);
+        console.log("[bell] latest:", latest, courseId);
         if (latest) {
           const stored = Number(localStorage.getItem(seenKey) ?? "0");
           if (!stored) {
             localStorage.setItem(seenKey, String(latest));
+            console.log("[bell] stored initial", courseId);
           } else if (latest > stored) {
             setHasNew(true);
+            console.log("[bell] NEW detected", courseId);
           }
         }
-      } catch {
+      } catch (e) {
+        console.log("[bell] error", courseId, e instanceof Error ? e.message : e);
         // Silent: the bell is a hint, errors surface when results are opened.
       } finally {
         busyRef.current = false;
