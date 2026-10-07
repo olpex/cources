@@ -42,11 +42,13 @@ export const resultKey = (r: ResultRow) => [r.module, r.time, r.score, r.name].m
 type Group = { key: string; name: string; rows: ResultRow[]; avg: number | null };
 
 export function CourseResults({
+  courseId,
   modules,
   edit = false,
   hidden = [],
   onHide,
 }: {
+  courseId: string;
   modules: string[];
   edit?: boolean;
   hidden?: string[];
@@ -60,14 +62,67 @@ export function CourseResults({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [hasNew, setHasNew] = useState(false);
   const load = useServerFn(fetchCourseResults);
+
+  const seenKey = `resultsSeen:${courseId}`;
+  const modulesKey = modules.join("|");
+  const hiddenKey = hidden.join("|");
+  const busyRef = useRef(false);
+  const latestRef = useRef<ResultRow[] | null>(null);
+
+  const maxTime = (list: ResultRow[]) =>
+    list.reduce((a, r) => Math.max(a, parseTime(r.time)), 0);
+
+  // Background check for new test submissions: polls the results sheet
+  // once a minute and shows the bell when unseen results appear.
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (busyRef.current) return;
+      busyRef.current = true;
+      try {
+        const r = await load({ data: { modules: modulesKey.split("|") } });
+        if (cancelled) return;
+        const hiddenSetLocal = new Set(hiddenKey ? hiddenKey.split("|") : []);
+        const visible = r.filter((row) => !hiddenSetLocal.has(resultKey(row)));
+        const latest = maxTime(visible);
+        if (latest) {
+          const stored = Number(localStorage.getItem(seenKey) ?? "0");
+          if (!stored) {
+            localStorage.setItem(seenKey, String(latest));
+          } else if (latest > stored) {
+            setHasNew(true);
+          }
+        }
+      } catch {
+        // Silent: the bell is a hint, errors surface when results are opened.
+      } finally {
+        busyRef.current = false;
+      }
+    };
+    void check();
+    const iv = setInterval(() => void check(), 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(iv);
+    };
+  }, [modulesKey, hiddenKey, seenKey, load]);
+
+  const markSeen = (list: ResultRow[]) => {
+    const latest = maxTime(list);
+    if (latest) localStorage.setItem(seenKey, String(latest));
+    setHasNew(false);
+  };
 
   const fetchRows = async () => {
     setBusy(true);
     setError(null);
     try {
       const r = await load({ data: { modules } });
-      setRows(r.sort((a, b) => parseTime(b.time) - parseTime(a.time)));
+      const sorted = r.sort((a, b) => parseTime(b.time) - parseTime(a.time));
+      latestRef.current = sorted;
+      setRows(sorted);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Помилка завантаження");
     } finally {
@@ -78,7 +133,12 @@ export function CourseResults({
   const toggle = () => {
     const next = !open;
     setOpen(next);
-    if (next && rows === null && !busy) void fetchRows();
+    if (next) {
+      // Opening the section counts as viewing: the bell is cleared and
+      // the seen marker is updated with the freshest data.
+      if (latestRef.current) markSeen(latestRef.current);
+      if (!busy) void fetchRows().then(() => markSeen(latestRef.current ?? []));
+    }
   };
 
   const tags = useMemo(() => {
