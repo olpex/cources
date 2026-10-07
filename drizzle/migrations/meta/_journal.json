@@ -29,6 +29,13 @@
       "when": 1791377849113,
       "tag": "0003_forum_moderation_edit",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791379068008,
+      "tag": "0004_subscription_allows",
+      "breakpoints": true
     }
   ]
 }
