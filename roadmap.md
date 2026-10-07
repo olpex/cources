@@ -1,3 +1,3 @@
-- [ ] Move forum access before Viber in every course; preserve header feedback.
-- [ ] Add a red forum mention and halve the requested section gaps.
-- [ ] Verify course section order, links and spacing in the preview.
+- [x] Move forum access before Viber in every course; preserve header feedback.
+- [x] Add a red forum mention and halve the requested section gaps.
+- [x] Verify course section order, links and spacing in the preview.
