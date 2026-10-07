@@ -631,6 +631,12 @@ export function CoursesLanding() {
                         </Button>
                       )}
 
+                      <ModuleMaterials
+                        materials={m.materials ?? []}
+                        edit={edit}
+                        onChange={(next) => updateModule(course.id, m.id, { materials: next })}
+                      />
+
                       {m.testUrl && (
                         <Button
                           size="sm"
@@ -649,11 +655,6 @@ export function CoursesLanding() {
                         </Button>
                       )}
 
-                      <ModuleMaterials
-                        materials={m.materials ?? []}
-                        edit={edit}
-                        onChange={(next) => updateModule(course.id, m.id, { materials: next })}
-                      />
 
 
 
