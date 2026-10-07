@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Award, ChevronDown, ChevronRight, Loader2, RefreshCw, Trash2 } from "lucide-react";
+import { Award, BellRing, ChevronDown, ChevronRight, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCourseResults, type ResultRow } from "@/lib/results.functions";
 
