@@ -76,6 +76,8 @@ function ForumPage() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [subs, setSubs] = useState<string[]>([]);
+  const [blocked, setBlocked] = useState<string[]>([]);
+  const [banned, setBanned] = useState(false);
   const [filterCourse, setFilterCourse] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
   const [open, setOpen] = useState<string | null>(null);
@@ -83,14 +85,21 @@ function ForumPage() {
 
   const load = useCallback(async () => {
     if (!user) return;
-    const [t, r, s] = await Promise.all([
+    const [t, r, s, b, ban] = await Promise.all([
       supabase.from("forum_threads").select("*").order("created_at", { ascending: false }),
       supabase.from("forum_replies").select("*").order("created_at"),
       supabase.from("course_subscriptions").select("course_id").eq("user_id", user.id),
+      supabase
+        .from("subscription_blocks")
+        .select("course_id")
+        .eq("email", (user.email ?? "").toLowerCase()),
+      supabase.rpc("is_banned"),
     ]);
     setThreads((t.data as Thread[]) ?? []);
     setReplies((r.data as Reply[]) ?? []);
     setSubs((s.data ?? []).map((x) => x.course_id));
+    setBlocked((b.data ?? []).map((x) => x.course_id));
+    setBanned(!!ban.data);
   }, [user]);
 
   useEffect(() => {
@@ -120,10 +129,16 @@ function ForumPage() {
       await supabase.from("course_subscriptions").insert({
         user_id: user.id,
         course_id: courseId,
-        email: user.email ?? "",
+        email: (user.email ?? "").toLowerCase(),
         name: displayName,
       });
     }
+    void load();
+  };
+
+  const unsubscribeAll = async () => {
+    if (!user || !confirm("Відписатися від усіх розсилок курсів?")) return;
+    await supabase.from("course_subscriptions").delete().eq("user_id", user.id);
     void load();
   };
 
@@ -289,6 +304,8 @@ function ForumPage() {
               );
             })}
           </ul>
+            </>
+          )}
         </>
       )}
     </main>
