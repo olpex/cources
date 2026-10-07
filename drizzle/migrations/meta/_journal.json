@@ -36,6 +36,13 @@
       "when": 1791379068008,
       "tag": "0004_subscription_allows",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791379833845,
+      "tag": "0005_thread_watchers",
+      "breakpoints": true
     }
   ]
 }

@@ -223,6 +223,35 @@ export type Database = {
         }
         Relationships: []
       }
+      thread_watchers: {
+        Row: {
+          created_at: string
+          email: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thread_watchers_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "forum_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
