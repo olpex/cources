@@ -33,7 +33,37 @@ export const fetchYoutubeInfo = createServerFn({ method: "POST" })
       /* ignore */
     }
 
-    try {
+    // 1) Internal player API — works even when the watch page shows a consent wall.
+    for (const client of [
+      { clientName: "WEB", clientVersion: "2.20240726.00.00" },
+      { clientName: "MWEB", clientVersion: "2.20240726.01.00" },
+    ]) {
+      if (publishedAt && title) break;
+      try {
+        const r = await fetch("https://www.youtube.com/youtubei/v1/player?prettyPrint=false", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ context: { client: { ...client, hl: "uk" } }, videoId }),
+        });
+        if (!r.ok) continue;
+        const j = (await r.json()) as {
+          videoDetails?: { title?: string };
+          microformat?: { playerMicroformatRenderer?: { publishDate?: string; uploadDate?: string } };
+        };
+        const mf = j.microformat?.playerMicroformatRenderer;
+        const raw = mf?.publishDate ?? mf?.uploadDate;
+        if (raw && !publishedAt) {
+          const d = new Date(raw);
+          if (!Number.isNaN(d.getTime())) publishedAt = d.toISOString();
+        }
+        if (!title && j.videoDetails?.title) title = j.videoDetails.title;
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (!publishedAt) try {
+
       const r = await fetch(`${watch}&hl=uk`, {
         headers: {
           "Accept-Language": "uk,en;q=0.8",
