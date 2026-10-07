@@ -167,27 +167,52 @@ function ForumPage() {
             </button>
           </p>
 
+          {banned && !isTeacher ? (
+            <div className="mt-6 rounded-2xl border border-destructive/40 bg-destructive/5 p-5 text-destructive">
+              Доступ до форуму для цієї адреси заблоковано викладачем.
+            </div>
+          ) : (
+            <>
           {!isTeacher && (
             <section className="mt-6 rounded-2xl border border-border bg-card p-5">
               <h2 className="font-semibold">Підписка на оголошення курсів</h2>
               <p className="text-sm text-muted-foreground">
-                Отримуйте організаційні повідомлення викладача на {user.email}.
+                Отримуйте організаційні повідомлення викладача на {user.email}. Після завершення
+                навчання ви можете відписатися будь-коли.
               </p>
               <div className="mt-3 space-y-2">
-                {courses.map((c) => (
-                  <label key={c.id} className="flex items-center gap-3 text-sm">
-                    <Switch
-                      checked={subs.includes(c.id)}
-                      onCheckedChange={() => void toggleSub(c.id)}
-                    />
-                    {c.title}
-                  </label>
-                ))}
+                {courses.map((c) =>
+                  blocked.includes(c.id) ? (
+                    <p key={c.id} className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <Switch checked={false} disabled />
+                      {c.title} — підписку закрито викладачем
+                    </p>
+                  ) : (
+                    <label key={c.id} className="flex items-center gap-3 text-sm">
+                      <Switch
+                        checked={subs.includes(c.id)}
+                        onCheckedChange={() => void toggleSub(c.id)}
+                      />
+                      {c.title}
+                    </label>
+                  ),
+                )}
               </div>
+              {subs.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => void unsubscribeAll()}
+                >
+                  Відписатися від усіх розсилок
+                </Button>
+              )}
             </section>
           )}
 
           {isTeacher && <BroadcastForm courses={courses.map((c) => ({ id: c.id, title: c.title }))} />}
+          {isTeacher && <ManageStudents courses={courses.map((c) => ({ id: c.id, title: c.title }))} />}
 
           <NewThreadForm
             courses={courses.map((c) => ({ id: c.id, title: c.title }))}
@@ -195,6 +220,7 @@ function ForumPage() {
             name={displayName}
             onCreated={load}
           />
+
 
           <div className="mt-8 flex flex-wrap gap-3">
             <select
