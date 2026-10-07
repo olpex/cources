@@ -473,26 +473,40 @@ export function CoursesLanding() {
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
             )}
 
-            {course.viberUrl && !(courseOff && !admin) && (
+            {(course.viberUrl || course.knowledgeBaseUrl || edit) && !(courseOff && !admin) && (
               <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 basis-80 items-center gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
                     <Users className="size-5 text-primary" />
                   </span>
                   <div>
-                    <p className="font-semibold">Viber-спільнота курсу</p>
+                    <p className="font-semibold">Viber-спільнота курсу та база знань курсу</p>
                     <p className="text-sm text-muted-foreground">
-                      Приєднуйтеся до спільноти «ШІ розвиток кар'єри та профзростання»
+                      Приєднуйся до спільноти «{course.title}» та бази знань, у якій викладаються окремі матеріали до курсу
                     </p>
                   </div>
                 </div>
-                <Button asChild variant="viber">
-                  <a href={course.viberUrl} target="_blank" rel="noopener noreferrer">
-                    <ViberIcon className="size-4" color="currentColor" />
-                    Приєднатися
-                    <ExternalLink className="size-3.5 opacity-70" />
-                  </a>
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                  {[
+                    { label: "Спільнота курсу", url: course.viberUrl },
+                    { label: "База знань", url: course.knowledgeBaseUrl },
+                  ].map(({ label, url }) => url ? (
+                    <Button key={label} asChild variant="viber" size="sm">
+                      <a href={url} target="_blank" rel="noopener noreferrer">
+                        <ViberIcon color="currentColor" />
+                        {label}
+                        <ExternalLink className="hidden opacity-70 sm:block" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <span key={label} title="Посилання ще не додано">
+                      <Button variant="viber" size="sm" disabled>
+                        <ViberIcon color="currentColor" />
+                        {label}
+                      </Button>
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 

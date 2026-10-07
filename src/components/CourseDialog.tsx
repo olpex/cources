@@ -17,26 +17,39 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   course?: CourseItem | null;
-  onSave: (data: { title: string; subtitle: string; description: string }) => void;
+  onSave: (data: { title: string; subtitle: string; description: string; viberUrl: string; knowledgeBaseUrl: string }) => void;
 };
 
 export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
   const [title, setTitle] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [description, setDescription] = useState("");
+  const [viberUrl, setViberUrl] = useState("");
+  const [knowledgeBaseUrl, setKnowledgeBaseUrl] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setTitle(course?.title ?? "");
     setSubtitle(course?.subtitle ?? "");
     setDescription(course?.description ?? "");
+    setViberUrl(course?.viberUrl ?? "");
+    setKnowledgeBaseUrl(course?.knowledgeBaseUrl ?? "");
   }, [open, course]);
 
-  const valid = title.trim().length > 0 && title.trim().length <= 120;
+  const validLink = (value: string) => {
+    if (!value.trim()) return true;
+    try {
+      const url = new URL(value.trim());
+      return url.protocol === "https:";
+    } catch {
+      return false;
+    }
+  };
+  const valid = title.trim().length > 0 && title.trim().length <= 120 && validLink(viberUrl) && validLink(knowledgeBaseUrl);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{course ? "Редагувати курс" : "Новий курс"}</DialogTitle>
           <DialogDescription>
@@ -76,6 +89,16 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
               placeholder="Про що цей курс"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="c-viber">Посилання на Viber-спільноту курсу</Label>
+            <Input id="c-viber" type="url" value={viberUrl} onChange={(e) => setViberUrl(e.target.value)} placeholder="https://invite.viber.com/…" aria-invalid={!validLink(viberUrl)} />
+            {!validLink(viberUrl) && <p className="text-sm text-destructive">Введіть повне посилання, що починається з https://</p>}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="c-knowledge">Посилання на Viber-базу знань курсу</Label>
+            <Input id="c-knowledge" type="url" value={knowledgeBaseUrl} onChange={(e) => setKnowledgeBaseUrl(e.target.value)} placeholder="https://invite.viber.com/…" aria-invalid={!validLink(knowledgeBaseUrl)} />
+            {!validLink(knowledgeBaseUrl) && <p className="text-sm text-destructive">Введіть повне посилання, що починається з https://</p>}
+          </div>
         </div>
 
         <DialogFooter>
@@ -89,6 +112,8 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
                 title: title.trim(),
                 subtitle: subtitle.trim(),
                 description: description.trim(),
+                viberUrl: viberUrl.trim(),
+                knowledgeBaseUrl: knowledgeBaseUrl.trim(),
               });
               onOpenChange(false);
             }}
