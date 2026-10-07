@@ -51,6 +51,8 @@ type Thread = {
   body: string;
   is_private: boolean;
   created_at: string;
+  is_closed: boolean;
+  edited_at: string | null;
 };
 type Reply = {
   id: string;
@@ -60,6 +62,7 @@ type Reply = {
   is_teacher: boolean;
   body: string;
   created_at: string;
+  edited_at: string | null;
 };
 
 const fmt = (s: string) =>
@@ -281,6 +284,9 @@ function ForumPage() {
                       {t.is_private && (
                         <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-destructive">Приватне</span>
                       )}
+                      {t.is_closed && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">Закрито</span>
+                      )}
                       {answered && (
                         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">Є відповідь викладача</span>
                       )}
@@ -296,7 +302,7 @@ function ForumPage() {
                       replies={rs}
                       userId={user.id}
                       name={displayName}
-                      canDelete={isTeacher || t.author_id === user.id}
+                      isTeacher={isTeacher}
                       onChange={load}
                     />
                   )}
@@ -406,68 +412,157 @@ function ThreadView({
   replies,
   userId,
   name,
-  canDelete,
+  isTeacher,
   onChange,
 }: {
   thread: Thread;
   replies: Reply[];
   userId: string;
   name: string;
-  canDelete: boolean;
+  isTeacher: boolean;
   onChange: () => void;
 }) {
   const notify = useServerFn(notifyReply);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [draftBody, setDraftBody] = useState("");
+  const isAuthor = thread.author_id === userId;
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
     setBusy(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("forum_replies")
       .insert({ thread_id: thread.id, author_id: userId, author_name: name, body: text.trim() })
       .select("id")
       .single();
-    setText("");
     setBusy(false);
+    if (error) return alert("Не вдалося надіслати відповідь: обговорення може бути закрите.");
+    setText("");
     onChange();
     if (data) notify({ data: { replyId: data.id } }).catch(() => {});
   };
 
   const remove = async () => {
-    if (!confirm("Видалити це звернення?")) return;
+    if (!confirm("Видалити це обговорення разом з усіма відповідями?")) return;
     await supabase.from("forum_threads").delete().eq("id", thread.id);
     onChange();
   };
 
+  const toggleClosed = async () => {
+    await supabase.from("forum_threads").update({ is_closed: !thread.is_closed }).eq("id", thread.id);
+    onChange();
+  };
+
+  const startEdit = (id: string, body: string, title = "") => {
+    setEditing(id);
+    setDraftBody(body);
+    setDraftTitle(title);
+  };
+
+  const saveEdit = async () => {
+    if (!draftBody.trim() || !editing) return;
+    if (editing === thread.id) {
+      if (!draftTitle.trim()) return;
+      await supabase.from("forum_threads").update({ title: draftTitle.trim(), body: draftBody.trim() }).eq("id", thread.id);
+    } else {
+      await supabase.from("forum_replies").update({ body: draftBody.trim() }).eq("id", editing);
+    }
+    setEditing(null);
+    onChange();
+  };
+
+  const removeReply = async (id: string) => {
+    if (!confirm("Видалити цей допис?")) return;
+    await supabase.from("forum_replies").delete().eq("id", id);
+    onChange();
+  };
+
+  const editor = (withTitle: boolean) => (
+    <div className="mt-2 space-y-2">
+      {withTitle && (
+        <Input value={draftTitle} onChange={(e) => setDraftTitle(e.target.value)} maxLength={200} />
+      )}
+      <Textarea value={draftBody} onChange={(e) => setDraftBody(e.target.value)} rows={3} maxLength={5000} />
+      <div className="flex gap-2">
+        <Button size="sm" onClick={() => void saveEdit()}>Зберегти</Button>
+        <Button size="sm" variant="outline" onClick={() => setEditing(null)}>Скасувати</Button>
+      </div>
+    </div>
+  );
+
+  const small = "text-xs text-muted-foreground underline-offset-2 hover:underline hover:text-foreground";
+
   return (
     <div className="mt-4 border-t border-border pt-4">
-      <p className="whitespace-pre-wrap">{thread.body}</p>
+      {editing === thread.id ? (
+        editor(true)
+      ) : (
+        <>
+          <p className="whitespace-pre-wrap">{thread.body}</p>
+          <div className="mt-1 flex gap-3">
+            {thread.edited_at && <span className="text-xs text-muted-foreground">(змінено)</span>}
+            {isAuthor && (
+              <button className={small} onClick={() => startEdit(thread.id, thread.body, thread.title)}>
+                Редагувати
+              </button>
+            )}
+          </div>
+        </>
+      )}
       <ul className="mt-4 space-y-3">
-        {replies.map((r) => (
-          <li
-            key={r.id}
-            className={`rounded-xl p-3 ${r.is_teacher ? "bg-primary/10" : "bg-secondary"}`}
-          >
-            <p className="text-xs text-muted-foreground">
-              <b>{r.is_teacher ? "Викладач" : r.author_name}</b> · {fmt(r.created_at)}
-            </p>
-            <p className="mt-1 whitespace-pre-wrap text-sm">{r.body}</p>
-          </li>
-        ))}
+        {replies.map((r) => {
+          const mine = r.author_id === userId;
+          return (
+            <li key={r.id} className={`rounded-xl p-3 ${r.is_teacher ? "bg-primary/10" : "bg-secondary"}`}>
+              <p className="text-xs text-muted-foreground">
+                <b>{r.is_teacher ? "Викладач" : r.author_name}</b> · {fmt(r.created_at)}
+                {r.edited_at && " · змінено"}
+              </p>
+              {editing === r.id ? (
+                editor(false)
+              ) : (
+                <>
+                  <p className="mt-1 whitespace-pre-wrap text-sm">{r.body}</p>
+                  {(mine || isTeacher) && (
+                    <div className="mt-1 flex gap-3">
+                      {mine && (
+                        <button className={small} onClick={() => startEdit(r.id, r.body)}>Редагувати</button>
+                      )}
+                      <button className={small} onClick={() => void removeReply(r.id)}>Видалити</button>
+                    </div>
+                  )}
+                </>
+              )}
+            </li>
+          );
+        })}
       </ul>
-      <form onSubmit={send} className="mt-3 space-y-2">
-        <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Ваша відповідь" rows={3} maxLength={5000} />
-        <div className="flex gap-2">
+      {thread.is_closed ? (
+        <p className="mt-3 rounded-xl bg-muted p-3 text-sm text-muted-foreground">
+          Обговорення закрите викладачем. Нові відповіді додавати не можна.
+        </p>
+      ) : (
+        <form onSubmit={send} className="mt-3 space-y-2">
+          <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Ваша відповідь" rows={3} maxLength={5000} />
           <Button type="submit" size="sm" disabled={busy}>Відповісти</Button>
-          {canDelete && (
-            <Button type="button" size="sm" variant="outline" onClick={() => void remove()}>
-              Видалити звернення
+        </form>
+      )}
+      {(isTeacher || isAuthor) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {isTeacher && (
+            <Button type="button" size="sm" variant="outline" onClick={() => void toggleClosed()}>
+              {thread.is_closed ? "Відкрити обговорення" : "Закрити обговорення"}
             </Button>
           )}
+          <Button type="button" size="sm" variant="outline" onClick={() => void remove()}>
+            Видалити обговорення
+          </Button>
         </div>
-      </form>
+      )}
     </div>
   );
 }
