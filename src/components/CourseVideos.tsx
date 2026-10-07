@@ -52,13 +52,13 @@ export function CourseVideos({ videos, edit, onChange }: Props) {
       if (Object.keys(got).length === 0) return;
       setFound((f) => ({ ...f, ...got }));
       if (edit) {
-        onChange(videos.map((v) => (got[v.videoId] ? { ...v, publishedAt: got[v.videoId] } : v)));
+        onChange(videos.map((v) => { const p = got[v.videoId]; return p ? { ...v, publishedAt: p } : v; }));
       }
     })();
   }, [videos, edit, getInfo, onChange]);
 
   const list = sortVideos(
-    videos.map((v) => (!v.publishedAt && found[v.videoId] ? { ...v, publishedAt: found[v.videoId] } : v)),
+    videos.map((v) => { const p = found[v.videoId]; return !v.publishedAt && p ? { ...v, publishedAt: p } : v; }),
   );
 
   if (!edit && list.length === 0) return null;
