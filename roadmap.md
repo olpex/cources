@@ -1,4 +1,3 @@
-- [x] Match the forum button to the adjacent feedback button.
-- [x] Format broadcast signature and forum link in italics; use the course name in the sender display name.
-- [x] Check recipient-side importance and stars: Gmail controls these in the recipient mailbox; sender cannot force them.
-- [x] Verify button appearance and encoded email content without sending a real email.
+- [x] Move forum access before Viber in every course; preserve header feedback.
+- [x] Add a red forum mention and halve the requested section gaps.
+- [x] Verify course section order, links and spacing in the preview.
