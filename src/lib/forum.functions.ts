@@ -126,27 +126,42 @@ export const notifyReply = createServerFn({ method: "POST" })
     if (!r || r.author_id !== context.userId) return { ok: false };
     const { data: t } = await context.supabase
       .from("forum_threads")
-      .select("title, author_id")
+      .select("title, author_id, is_private")
       .eq("id", r.thread_id)
       .maybeSingle();
     if (!t) return { ok: false };
-    if (r.is_teacher) {
-      if (t.author_id === context.userId) return { ok: true };
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: u } = await supabaseAdmin.auth.admin.getUserById(t.author_id);
-      const email = u?.user?.email;
-      if (!email) return { ok: false };
-      await sendGmail(
-        email,
-        `Відповідь викладача: ${t.title}`,
-        `Викладач відповів на ваше звернення «${t.title}»:\n\n${r.body}\n\nПереглянути обговорення: ${forumUrl()}`,
-      );
-    } else {
-      await sendGmail(
-        TEACHER_EMAIL,
-        `Нова відповідь на форумі: ${t.title}`,
-        `${r.author_name} написав(-ла):\n\n${r.body}\n\nПереглянути: ${forumUrl()}`,
-      );
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const ids = new Set<string>([t.author_id]);
+    const { data: prior } = await supabaseAdmin
+      .from("forum_replies").select("author_id").eq("thread_id", r.thread_id);
+    // Prior participants only for public threads (private: author + teacher)
+    if (!t.is_private) for (const p of prior ?? []) ids.add(p.author_id);
+    const emails = new Set<string>();
+    for (const id of ids) {
+      if (id === context.userId) continue;
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(id);
+      if (u?.user?.email) emails.add(u.user.email.toLowerCase());
+    }
+    if (!t.is_private) {
+      const { data: w } = await supabaseAdmin
+        .from("thread_watchers").select("email, user_id").eq("thread_id", r.thread_id);
+      for (const x of w ?? []) if (x.user_id !== context.userId) emails.add(x.email.toLowerCase());
+    }
+    if (!r.is_teacher) emails.add(TEACHER_EMAIL);
+    const { data: me } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const myEmail = me?.user?.email?.toLowerCase();
+    if (myEmail) emails.delete(myEmail);
+    const who = r.is_teacher ? "Викладач" : r.author_name || "Учасник";
+    for (const email of emails) {
+      try {
+        await sendGmail(
+          email,
+          `Відповідь: ${t.title}`,
+          `${who} відповів(-ла) в обговоренні «${t.title}»:\n\n${r.body}\n\nПереглянути обговорення: ${forumUrl()}`,
+        );
+      } catch (e) {
+        console.error("notifyReply failed", email, e);
+      }
     }
     return { ok: true };
   });
