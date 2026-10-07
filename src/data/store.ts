@@ -44,6 +44,8 @@ export type CourseItem = {
   sourceDocUrl?: string;
   /** Viber community invite link shown on the course page */
   viberUrl?: string;
+  /** Separate Viber community containing course knowledge-base materials. */
+  knowledgeBaseUrl?: string;
   /** YouTube recordings, sorted by publish date */
   videos?: VideoItem[];
   /** test results removed by the admin (keys from resultKey) */
