@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/forum")({
+  staticData: { sitemap: true },
   head: () => ({
     meta: [
       { title: "Форум курсів — Навчальна платформа викладача" },
