@@ -566,7 +566,7 @@ export function CoursesLanding() {
             )}
 
             {!(courseOff && !admin) && course.modules.length > 0 && (
-              <PracticalResults courseId={course.id} edit={edit} />
+              <PracticalResults courseId={course.id} edit={edit} modules={course.modules.map((m) => m.title)} />
             )}
 
             {course.modules.length === 0 && !edit ? (
@@ -685,7 +685,18 @@ export function CoursesLanding() {
                         onChange={(next) => updateModule(course.id, m.id, { materials: next })}
                       />
 
-                      {m.practicalTask && (
+                      {(m.practicals ?? []).map((p) => (
+                        <PracticalButton
+                          key={p.id}
+                          courseId={course.id}
+                          moduleId={m.id}
+                          practicalId={p.id}
+                          title={p.title}
+                          task={p.task}
+                        />
+                      ))}
+
+                      {!m.practicals?.length && m.practicalTask && (
                         <PracticalButton
                           courseId={course.id}
                           moduleId={m.id}

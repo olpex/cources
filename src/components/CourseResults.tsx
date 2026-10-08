@@ -16,7 +16,7 @@ function parseScore(s: string): number | null {
 
 const cap = (w: string) => (w ? w[0]!.toLocaleUpperCase("uk-UA") + w.slice(1).toLocaleLowerCase("uk-UA") : w);
 const tokens = (n: string) => n.trim().split(/\s+/).filter(Boolean).map(cap);
-const studentKey = (n: string) =>
+export const studentKey = (n: string) =>
   tokens(n)
     .map((t) => t.toLocaleLowerCase("uk-UA").replace(/[’'`ʼ]/g, "'"))
     .sort()
@@ -24,7 +24,7 @@ const studentKey = (n: string) =>
 
 const SURNAME = /(енко|ко|чук|ук|юк|ич|ович|евич|ів|їв|ов|ев|єв|ин|ін|ський|цький|зький|ська|цька|зька|ова|ева|єва|іна|ина|ак|ик|як|ар|яр|ай|ей|ій)$/i;
 
-function displayName(variants: string[]) {
+export function displayName(variants: string[]) {
   const count = new Map<string, number>();
   for (const v of variants) {
     const s = tokens(v).join(" ");
@@ -40,6 +40,8 @@ function displayName(variants: string[]) {
 export const resultKey = (r: ResultRow) => [r.module, r.time, r.score, r.name].map((x) => x.trim()).join("|");
 
 type Group = { key: string; name: string; rows: ResultRow[]; avg: number | null };
+
+export { parseScore };
 
 export function CourseResults({
   courseId,
