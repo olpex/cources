@@ -1,6 +1,6 @@
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, Hammer, Loader2, Trophy, X } from "lucide-react";
+import { ChevronRight, FileText, Hammer, Loader2, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchCourseResults, type ResultRow } from "@/lib/results.functions";
+import { displayName, parseScore, studentKey } from "@/components/CourseResults";
 import { gradePractical, submitPractical, type PracticalFile } from "@/lib/practical.functions";
 
 const BUCKET = "practical-files";
@@ -36,20 +38,21 @@ function Linkified({ text }: { text: string }) {
   );
 }
 
-export function PracticalButton(props: { courseId: string; moduleId: string; title: string; task: string }) {
+export function PracticalButton(props: { courseId: string; moduleId: string; practicalId?: string; title: string; task: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
         <Hammer className="size-4" />
-        Практична робота
+        {props.practicalId ? props.title : "Практична робота"}
       </Button>
       {open && <PracticalDialog {...props} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function PracticalDialog({ courseId, moduleId, title, task, onClose }: { courseId: string; moduleId: string; title: string; task: string; onClose: () => void }) {
+function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose }: { courseId: string; moduleId: string; practicalId?: string; title: string; task: string; onClose: () => void }) {
+  const taskId = practicalId ?? moduleId;
   const { user, loading } = useAuth();
   const submit = useServerFn(submitPractical);
   const [answer, setAnswer] = useState("");
@@ -65,11 +68,11 @@ function PracticalDialog({ courseId, moduleId, title, task, onClose }: { courseI
       .select("id, ai_score, teacher_score, feedback, created_at, status")
       .eq("user_id", user.id)
       .eq("course_id", courseId)
-      .eq("module_id", moduleId)
+      .eq("module_id", taskId)
       .order("created_at", { ascending: false })
       .limit(1);
     setLast((data?.[0] as Own) ?? null);
-  }, [user, courseId, moduleId]);
+  }, [user, courseId, taskId]);
 
   useEffect(() => {
     void loadOwn();
@@ -99,12 +102,12 @@ function PracticalDialog({ courseId, moduleId, title, task, onClose }: { courseI
       const uploaded: PracticalFile[] = [];
       for (const f of files) {
         const safe = f.name.replace(/[^\w.\-]+/g, "_").slice(-80);
-        const path = `${user.id}/${courseId}/${moduleId}/${Date.now()}-${safe}`;
+        const path = `${user.id}/${courseId}/${taskId}/${Date.now()}-${safe}`;
         const { error } = await supabase.storage.from(BUCKET).upload(path, f, f.type ? { contentType: f.type } : {});
         if (error) throw new Error(`Не вдалося завантажити «${f.name}»`);
         uploaded.push({ path, name: f.name, type: f.type, size: f.size });
       }
-      const r = await submit({ data: { courseId, moduleId, answer, links, files: uploaded } });
+      const r = await submit({ data: { courseId, moduleId, ...(practicalId ? { practicalId } : {}), answer, links, files: uploaded } });
       toast.success(r.score ? `Оцінка: ${r.score} з 12` : "Роботу надіслано викладачу на перевірку");
       setAnswer("");
       setLinks("");
@@ -123,7 +126,7 @@ function PracticalDialog({ courseId, moduleId, title, task, onClose }: { courseI
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Практична робота — {title}</DialogTitle>
+          <DialogTitle>{practicalId ? title : `Практична робота — ${title}`}</DialogTitle>
         </DialogHeader>
         <div className="whitespace-pre-line rounded-xl bg-secondary p-4 text-sm">
           <Linkified text={task} />
@@ -304,7 +307,11 @@ function ReviewDialog({ id, onClose, onSaved }: { id: string; onClose: () => voi
   );
 }
 
-export function PracticalResults({ courseId, edit }: { courseId: string; edit: boolean }) {
+export function PracticalResults({ courseId, edit, modules }: { courseId: string; edit: boolean; modules: string[] }) {
+  const loadTests = useServerFn(fetchCourseResults);
+  const [tests, setTests] = useState<ResultRow[]>([]);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const modulesKey = modules.join("|");
   const [rows, setRows] = useState<Score[]>([]);
   const [pending, setPending] = useState<Score[]>([]);
   const [open, setOpen] = useState(false);
@@ -323,6 +330,42 @@ export function PracticalResults({ courseId, edit }: { courseId: string; edit: b
       setPending(((p ?? []) as Omit<Score, "score">[]).map((r) => ({ ...r, score: null })));
     }
   }, [courseId, edit]);
+
+  useEffect(() => {
+    const run = () =>
+      loadTests({ data: { modules: modulesKey.split("|") } })
+        .then(setTests)
+        .catch(() => {});
+    void run();
+    const t = window.setInterval(run, 60000);
+    return () => window.clearInterval(t);
+  }, [loadTests, modulesKey]);
+
+  const students = useMemo(() => {
+    const map = new Map<string, { names: string[]; practical: Score[]; tests: number[] }>();
+    const get = (n: string) => {
+      const k = studentKey(n) || "—";
+      if (!map.has(k)) map.set(k, { names: [], practical: [], tests: [] });
+      const e = map.get(k)!;
+      e.names.push(n);
+      return e;
+    };
+    for (const r of rows) get(r.student_name).practical.push(r);
+    for (const t of tests) {
+      const n = parseScore(t.score);
+      if (n !== null) get(t.name).tests.push(n);
+    }
+    const avg = (a: number[]) => (a.length ? Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 10) / 10 : null);
+    return [...map.entries()]
+      .filter(([, e]) => e.practical.length)
+      .map(([key, e]) => {
+        const p = avg(e.practical.map((r) => r.score).filter((n): n is number => n !== null));
+        const t = avg(e.tests);
+        const total = p !== null && t !== null ? Math.round(((p + t) / 2) * 10) / 10 : (p ?? t);
+        return { key, name: displayName(e.names) || "Без імені", practical: e.practical, p, t, total };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, "uk"));
+  }, [rows, tests]);
 
   useEffect(() => {
     void load();
@@ -361,27 +404,52 @@ export function PracticalResults({ courseId, edit }: { courseId: string; edit: b
               </ul>
             </div>
           )}
-          <ul className="mt-3 divide-y divide-border text-sm">
-            {rows
-              .slice()
-              .sort((a, b) => a.student_name.localeCompare(b.student_name, "uk"))
-              .map((r) => (
-                <li key={r.id} className="flex items-center justify-between gap-3 py-2">
-                  <span className="min-w-0">
-                    <span className="font-medium">{r.student_name}</span>
-                    <span className="text-muted-foreground"> — {r.module_title}</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="font-semibold">{r.score ?? "—"}/12</span>
-                    {edit && (
-                      <Button size="sm" variant="ghost" onClick={() => setReview(r.id)}>
-                        Переглянути
-                      </Button>
-                    )}
-                  </span>
-                </li>
-              ))}
-          </ul>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-xs text-muted-foreground">
+                <tr className="text-left">
+                  <th className="py-2 pr-3 font-normal">Здобувач освіти</th>
+                  <th className="py-2 pr-3 text-center font-normal">Практичні</th>
+                  <th className="py-2 pr-3 text-center font-normal">Тести</th>
+                  <th className="py-2 text-center font-normal">Бал за курс</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.map((s) => (
+                  <Fragment key={s.key}>
+                    <tr className="cursor-pointer border-t border-border hover:bg-muted/50" onClick={() => setExpanded(expanded === s.key ? null : s.key)}>
+                      <td className="py-2 pr-3 font-medium">
+                        <ChevronRight className={`mr-1 inline size-4 transition-transform ${expanded === s.key ? "rotate-90" : ""}`} />
+                        {s.name}
+                      </td>
+                      <td className="py-2 pr-3 text-center">{s.p ?? "—"}</td>
+                      <td className="py-2 pr-3 text-center">{s.t ?? "—"}</td>
+                      <td className="py-2 text-center">
+                        <span className="rounded-md bg-primary px-2 py-0.5 font-semibold text-primary-foreground">{s.total ?? "—"}</span>
+                      </td>
+                    </tr>
+                    {expanded === s.key &&
+                      s.practical.map((r) => (
+                        <tr key={r.id} className="text-muted-foreground">
+                          <td className="py-1 pl-7 pr-3" colSpan={3}>{r.module_title}</td>
+                          <td className="py-1 text-center">
+                            <span className="font-semibold text-foreground">{r.score ?? "—"}/12</span>
+                            {edit && (
+                              <Button size="sm" variant="ghost" onClick={() => setReview(r.id)}>
+                                Переглянути
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Бал за курс — середнє між практичними й тестами; якщо чогось одного немає, зараховується інше.
+            </p>
+          </div>
         </>
       )}
       {review && <ReviewDialog id={review} onClose={() => setReview(null)} onSaved={() => void load()} />}
