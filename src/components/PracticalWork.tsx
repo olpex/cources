@@ -100,7 +100,7 @@ function PracticalDialog({ courseId, moduleId, title, task, onClose }: { courseI
       for (const f of files) {
         const safe = f.name.replace(/[^\w.\-]+/g, "_").slice(-80);
         const path = `${user.id}/${courseId}/${moduleId}/${Date.now()}-${safe}`;
-        const { error } = await supabase.storage.from(BUCKET).upload(path, f, { contentType: f.type || undefined });
+        const { error } = await supabase.storage.from(BUCKET).upload(path, f, f.type ? { contentType: f.type } : {});
         if (error) throw new Error(`Не вдалося завантажити «${f.name}»`);
         uploaded.push({ path, name: f.name, type: f.type, size: f.size });
       }
