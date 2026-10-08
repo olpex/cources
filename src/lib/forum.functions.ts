@@ -10,7 +10,7 @@ const b64 = (s: string) =>
   btoa(Array.from(new TextEncoder().encode(s), (b) => String.fromCharCode(b)).join(""));
 const header = (v: string) => (/^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${b64(v)}?=`);
 
-async function sendGmail(
+export async function sendGmail(
   to: string,
   subject: string,
   text: string,

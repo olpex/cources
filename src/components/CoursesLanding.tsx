@@ -56,6 +56,7 @@ import { YoutubeIcon } from "@/components/YoutubeIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { CourseResults } from "@/components/CourseResults";
+import { PracticalButton, PracticalResults } from "@/components/PracticalWork";
 import { ModuleMaterials } from "@/components/ModuleMaterials";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
@@ -564,8 +565,9 @@ export function CoursesLanding() {
               />
             )}
 
-
-
+            {!(courseOff && !admin) && course.modules.length > 0 && (
+              <PracticalResults courseId={course.id} edit={edit} />
+            )}
 
             {course.modules.length === 0 && !edit ? (
               <div className="rounded-2xl border border-dashed border-border bg-card/60 p-10 text-center">
@@ -682,6 +684,15 @@ export function CoursesLanding() {
                         edit={edit}
                         onChange={(next) => updateModule(course.id, m.id, { materials: next })}
                       />
+
+                      {m.practicalTask && (
+                        <PracticalButton
+                          courseId={course.id}
+                          moduleId={m.id}
+                          title={m.title}
+                          task={m.practicalTask}
+                        />
+                      )}
 
                       {m.testUrl && (
                         <Button

@@ -23,6 +23,8 @@ export type ModuleItem = {
   selfCheckUrl?: string;
   /** link to the Google Form shown as "Тест" */
   testUrl?: string;
+  /** task text for AI-graded practical work */
+  practicalTask?: string;
   /** false = module is shown but locked for students */
   active?: boolean;
   /** extra links (Drive, OneDrive, Gemini, Claude…) */
@@ -181,6 +183,7 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       ...(m.summaryUrl ? { summaryUrl: m.summaryUrl } : {}),
       ...(m.selfCheckUrl ? { selfCheckUrl: m.selfCheckUrl } : {}),
       ...(m.testUrl ? { testUrl: m.testUrl } : {}),
+      ...(m.practicalTask ? { practicalTask: m.practicalTask } : {}),
     };
     if (!prev) {
       return {
@@ -200,9 +203,10 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       (prev.summaryUrl ?? undefined) === m.summaryUrl &&
       (prev.selfCheckUrl ?? undefined) === m.selfCheckUrl &&
       (prev.testUrl ?? undefined) === m.testUrl &&
+      (prev.practicalTask ?? undefined) === m.practicalTask &&
       sameSlides(prev.notesDoc, m.slides);
     if (unchanged) return prev;
-    const { summaryUrl: _s, selfCheckUrl: _c, testUrl: _t, ...rest } = prev;
+    const { summaryUrl: _s, selfCheckUrl: _c, testUrl: _t, practicalTask: _p, ...rest } = prev;
     return {
       ...rest,
       title: m.title,

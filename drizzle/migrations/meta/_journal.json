@@ -43,6 +43,13 @@
       "when": 1791379833845,
       "tag": "0005_thread_watchers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791465505202,
+      "tag": "0006_practical_submissions",
+      "breakpoints": true
     }
   ]
 }
