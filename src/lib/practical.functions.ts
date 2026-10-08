@@ -12,6 +12,7 @@ type Input = {
   courseId: string;
   moduleId: string;
   practicalId?: string;
+  studentName?: string;
   answer: string;
   links: string;
   files: PracticalFile[];
@@ -91,13 +92,13 @@ export const submitPractical = createServerFn({ method: "POST" })
     }));
     if (!answer.trim() && !links.trim() && !files.length)
       throw new Error("Додайте відповідь, посилання або файл");
-    return { courseId: d.courseId, moduleId: d.moduleId, practicalId: typeof d.practicalId === "string" ? d.practicalId.slice(0, 100) : undefined, answer, links, files };
+    return { studentName: String(d.studentName ?? "").replace(/\s+/g, " ").trim().slice(0, 120), courseId: d.courseId, moduleId: d.moduleId, practicalId: typeof d.practicalId === "string" ? d.practicalId.slice(0, 100) : undefined, answer, links, files };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
     const email = String((claims as Record<string, unknown>)["email"] ?? "");
     const meta = ((claims as Record<string, unknown>)["user_metadata"] ?? {}) as Record<string, string>;
-    const name = meta["full_name"] || meta["name"] || email;
+    const name = data.studentName || meta["full_name"] || meta["name"] || email;
     if (data.files.some((f) => !f.path.startsWith(`${userId}/`))) throw new Error("Невірний файл");
 
     const { data: content } = await supabase.from("site_content").select("data").eq("id", "main").maybeSingle();

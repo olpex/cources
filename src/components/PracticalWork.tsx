@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ChevronRight, FileText, Hammer, Loader2, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchCourseResults, type ResultRow } from "@/lib/results.functions";
-import { displayName, parseScore, studentKey } from "@/components/CourseResults";
+import { fetchCourseSummary, type SummaryRow } from "@/lib/results.functions";
 import { gradePractical, submitPractical, type PracticalFile } from "@/lib/practical.functions";
 
 const BUCKET = "practical-files";
@@ -57,6 +56,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
   const submit = useServerFn(submitPractical);
   const [answer, setAnswer] = useState("");
   const [links, setLinks] = useState("");
+  const [fullName, setFullName] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<Own | null>(null);
@@ -97,6 +97,10 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
 
   const send = async () => {
     if (!user) return;
+    if (fullName.trim().split(/\s+/).length < 2) {
+      toast.error("Вкажіть прізвище та ім'я");
+      return;
+    }
     setBusy(true);
     try {
       const uploaded: PracticalFile[] = [];
@@ -107,7 +111,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
         if (error) throw new Error(`Не вдалося завантажити «${f.name}»`);
         uploaded.push({ path, name: f.name, type: f.type, size: f.size });
       }
-      const r = await submit({ data: { courseId, moduleId, ...(practicalId ? { practicalId } : {}), answer, links, files: uploaded } });
+      const r = await submit({ data: { courseId, moduleId, studentName: fullName, ...(practicalId ? { practicalId } : {}), answer, links, files: uploaded } });
       toast.success(r.score ? `Оцінка: ${r.score} з 12` : "Роботу надіслано викладачу на перевірку");
       setAnswer("");
       setLinks("");
@@ -151,6 +155,10 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
           </div>
         ) : (
           <div className="space-y-3">
+            <div className="text-sm">
+              <label className="mb-1 block text-muted-foreground">Прізвище та ім'я (так само, як у тестах)</label>
+              <Input value={fullName} maxLength={120} placeholder="Прізвище Ім'я" onChange={(e) => setFullName(e.target.value)} />
+            </div>
             <Textarea rows={6} placeholder="Ваша відповідь або коментар (необов'язково)" value={answer} onChange={(e) => setAnswer(e.target.value)} />
             <Textarea
               rows={2}
@@ -308,8 +316,8 @@ function ReviewDialog({ id, onClose, onSaved }: { id: string; onClose: () => voi
 }
 
 export function PracticalResults({ courseId, edit, modules }: { courseId: string; edit: boolean; modules: string[] }) {
-  const loadTests = useServerFn(fetchCourseResults);
-  const [tests, setTests] = useState<ResultRow[]>([]);
+  const loadSummary = useServerFn(fetchCourseSummary);
+  const [students, setStudents] = useState<SummaryRow[]>([]);
   const [expanded, setExpanded] = useState<string | null>(null);
   const modulesKey = modules.join("|");
   const [rows, setRows] = useState<Score[]>([]);
@@ -333,39 +341,15 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
 
   useEffect(() => {
     const run = () =>
-      loadTests({ data: { modules: modulesKey.split("|") } })
-        .then(setTests)
+      loadSummary({ data: { courseId, modules: modulesKey.split("|") } })
+        .then(setStudents)
         .catch(() => {});
     void run();
     const t = window.setInterval(run, 60000);
     return () => window.clearInterval(t);
-  }, [loadTests, modulesKey]);
+  }, [loadSummary, courseId, modulesKey, rows.length]);
 
-  const students = useMemo(() => {
-    const map = new Map<string, { names: string[]; practical: Score[]; tests: number[] }>();
-    const get = (n: string) => {
-      const k = studentKey(n) || "—";
-      if (!map.has(k)) map.set(k, { names: [], practical: [], tests: [] });
-      const e = map.get(k)!;
-      e.names.push(n);
-      return e;
-    };
-    for (const r of rows) get(r.student_name).practical.push(r);
-    for (const t of tests) {
-      const n = parseScore(t.score);
-      if (n !== null) get(t.name).tests.push(n);
-    }
-    const avg = (a: number[]) => (a.length ? Math.round((a.reduce((x, y) => x + y, 0) / a.length) * 10) / 10 : null);
-    return [...map.entries()]
-      .filter(([, e]) => e.practical.length)
-      .map(([key, e]) => {
-        const p = avg(e.practical.map((r) => r.score).filter((n): n is number => n !== null));
-        const t = avg(e.tests);
-        const total = p !== null && t !== null ? Math.round(((p + t) / 2) * 10) / 10 : (p ?? t);
-        return { key, name: displayName(e.names) || "Без імені", practical: e.practical, p, t, total };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, "uk"));
-  }, [rows, tests]);
+
 
   useEffect(() => {
     void load();
