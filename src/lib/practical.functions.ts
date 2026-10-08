@@ -61,6 +61,19 @@ function toBase64(bytes: Uint8Array) {
 }
 
 const signature = "Ваш викладач, Паращук Олег Леонідович";
+const TEACHER_EMAIL = "olppara@gmail.com";
+
+async function notifyTeacher(student: string, email: string, courseTitle: string, moduleTitle: string, result: string) {
+  try {
+    await sendGmail(
+      TEACHER_EMAIL,
+      `Нова практична робота: ${student} — ${moduleTitle}`,
+      `Студент: ${student} (${email})\nКурс: ${courseTitle}\nМодуль / практична робота: ${moduleTitle}\n\n${result}\n\nПереглянути роботу можна в блоці «Результати практичних робіт» на сторінці курсу.`,
+    );
+  } catch (e) {
+    console.error("teacher notify failed", e);
+  }
+}
 
 export const submitPractical = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -120,6 +133,7 @@ export const submitPractical = createServerFn({ method: "POST" })
 
     if (needsTeacher) {
       await admin.from("practical_submissions").update({ status: "manual" }).eq("id", row.id);
+      await notifyTeacher(name, email, course.title, mod.title, "Потрібна ваша перевірка: робота містить посилання або файли, які ШІ не оцінює.");
       return { score: null, manual: true, feedback: "Роботу отримано. Викладач перегляне посилання й файли та виставить оцінку." };
     }
 
@@ -205,10 +219,12 @@ ${image ? "\nСтудент також додав зображення (див. 
         .from("practical_submissions")
         .update({ status: "manual", feedback: null })
         .eq("id", row.id);
+      await notifyTeacher(name, email, course.title, mod.title, "Потрібна ваша перевірка: автоматична оцінка не вдалася.");
       return { score: null, manual: true, feedback: "Роботу збережено. Автоматична перевірка зараз недоступна — викладач оцінить її вручну." };
     }
 
     await admin.from("practical_submissions").update({ status: "graded", ai_score: score, feedback }).eq("id", row.id);
+    await notifyTeacher(name, email, course.title, mod.title, `ШІ оцінив роботу: ${score}/12. За потреби ви можете змінити оцінку.\n\nПояснення ШІ:\n${feedback}`);
     try {
       await sendGmail(
         email,
