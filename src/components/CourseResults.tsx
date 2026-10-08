@@ -205,9 +205,9 @@ export function CourseResults({
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2 font-semibold">
-          <Award className="size-5 text-primary" /> Результати тестів курсу
-          {rows && <span className="text-sm font-normal text-muted-foreground">({visibleCount})</span>}
+        <span className="flex items-center gap-2 font-semibold text-destructive">
+          <Award className="size-5 text-destructive" /> Результати тестів курсу
+          {rows && <span className="text-sm font-normal text-destructive">({visibleCount})</span>}
           {hasNew && (
             <BellRing
               className="size-5 animate-bounce text-destructive"
