@@ -169,6 +169,60 @@ export type Database = {
         }
         Relationships: []
       }
+      practical_submissions: {
+        Row: {
+          ai_score: number | null
+          answer: string
+          course_id: string
+          created_at: string
+          email: string
+          feedback: string | null
+          has_image: boolean
+          id: string
+          links: string
+          module_id: string
+          module_title: string
+          status: string
+          student_name: string
+          teacher_score: number | null
+          user_id: string
+        }
+        Insert: {
+          ai_score?: number | null
+          answer?: string
+          course_id: string
+          created_at?: string
+          email: string
+          feedback?: string | null
+          has_image?: boolean
+          id?: string
+          links?: string
+          module_id: string
+          module_title?: string
+          status?: string
+          student_name: string
+          teacher_score?: number | null
+          user_id: string
+        }
+        Update: {
+          ai_score?: number | null
+          answer?: string
+          course_id?: string
+          created_at?: string
+          email?: string
+          feedback?: string | null
+          has_image?: boolean
+          id?: string
+          links?: string
+          module_id?: string
+          module_title?: string
+          status?: string
+          student_name?: string
+          teacher_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_content: {
         Row: {
           data: Json
@@ -288,6 +342,17 @@ export type Database = {
       }
       is_banned: { Args: never; Returns: boolean }
       is_sub_blocked: { Args: { _course_id: string }; Returns: boolean }
+      practical_scores: {
+        Args: { _course_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          module_id: string
+          module_title: string
+          score: number
+          student_name: string
+        }[]
+      }
       thread_open: { Args: { _thread_id: string }; Returns: boolean }
     }
     Enums: {
