@@ -235,15 +235,36 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
   };
 }
 
+function isPracticalTab(tab: GDocTab) {
+  return /^практичн/i.test(tab.tabProperties?.title?.trim() ?? "");
+}
+
+/** Full text of a «Практична робота» sub-tab, keeping links (e.g. reference files). */
+function practicalTabText(tab: GDocTab): string {
+  const lines: string[] = [];
+  for (const p of flatten(tab.documentTab?.body?.content ?? [])) {
+    const text = paragraphText(p);
+    const urls = paragraphLinks(p).filter((u) => !text.includes(u));
+    const line = [text, ...urls].filter(Boolean).join(" ");
+    if (line) lines.push(line);
+  }
+  return lines.join("\n\n").trim();
+}
+
 export function parseGoogleDoc(doc: GDocResponse, docId: string): ParsedDoc {
   const modules: ParsedModule[] = [];
   const walk = (tabs: GDocTab[], parent?: string) => {
     for (const tab of tabs) {
       const parsed = parseTab(tab, parent);
-      modules.push(parsed);
-      if (tab.childTabs?.length) {
-        walk(tab.childTabs, tab.tabProperties?.title?.trim() || undefined);
+      const children = tab.childTabs ?? [];
+      const practicalTabs = children.filter(isPracticalTab);
+      if (practicalTabs.length) {
+        const task = practicalTabs.map(practicalTabText).filter(Boolean).join("\n\n");
+        if (task) parsed.practicalTask = task;
       }
+      modules.push(parsed);
+      const rest = children.filter((c) => !isPracticalTab(c));
+      if (rest.length) walk(rest, tab.tabProperties?.title?.trim() || undefined);
     }
   };
   walk(doc.tabs ?? []);
