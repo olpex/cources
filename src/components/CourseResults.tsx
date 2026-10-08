@@ -93,8 +93,13 @@ export function CourseResults({
       busyRef.current = true;
       try {
         const r = await load({ data: { modules: modulesKey.split("|") } });
+        const sorted = r.sort((a, b) => parseTime(b.time) - parseTime(a.time));
+        if (mountedRef.current) {
+          latestRef.current = sorted;
+          setRows(sorted);
+        }
         const hiddenSetLocal = new Set(hiddenKey ? hiddenKey.split("|") : []);
-        const visible = r.filter((row) => !hiddenSetLocal.has(resultKey(row)));
+        const visible = sorted.filter((row) => !hiddenSetLocal.has(resultKey(row)));
         const latest = maxTime(visible);
         if (latest) {
           const stored = Number(localStorage.getItem(seenKey) ?? "0");
