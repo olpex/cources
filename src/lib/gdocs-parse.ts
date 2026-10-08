@@ -22,6 +22,8 @@ export type ParsedModule = {
   selfCheckUrl?: string;
   /** Google Form test ("Тест") — last link after the notes */
   testUrl?: string;
+  /** task text under the «Практична робота» heading */
+  practicalTask?: string;
   slides: ParsedSlide[];
 };
 
@@ -160,6 +162,8 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
   let url = "";
   let current: ParsedSlide | null = null;
   let seenHeading = false;
+  let practical: string[] | null = null;
+  let practicalDone: string[] | null = null;
 
   for (const p of paragraphs) {
     const text = paragraphText(p);
@@ -171,6 +175,21 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
       continue;
     }
     if (!text) continue;
+
+    if (isHeading(style) && /^практична\s+робота/i.test(text)) {
+      practical = [];
+      continue;
+    }
+    if (practical) {
+      if (isHeading(style) && headingLevel(style) <= 2) {
+        practical = practical.length ? practical : null;
+        if (practical) practicalDone = practical;
+        practical = null;
+      } else {
+        if (!paragraphLinks(p).length) practical.push(text);
+        continue;
+      }
+    }
 
     if (isHeading(style)) {
       const level = headingLevel(style);
@@ -202,7 +221,10 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
   const { summaryUrl, selfCheckUrl, testUrl } = extractTrailingLinks(paragraphs, url);
 
   const title = tab.tabProperties?.title?.trim() || "Без назви";
+  const taskLines = practicalDone ?? practical;
+  const practicalTask = taskLines?.length ? taskLines.join("\n\n") : undefined;
   return {
+    ...(practicalTask ? { practicalTask } : {}),
     tabId: tab.tabProperties?.tabId ?? title,
     title: parentTitle ? `${parentTitle} — ${title}` : title,
     url,
