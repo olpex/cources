@@ -90,7 +90,7 @@ export const submitPractical = createServerFn({ method: "POST" })
     }));
     if (!answer.trim() && !links.trim() && !files.length)
       throw new Error("Додайте відповідь, посилання або файл");
-    return { courseId: d.courseId, moduleId: d.moduleId, answer, links, files };
+    return { courseId: d.courseId, moduleId: d.moduleId, practicalId: typeof d.practicalId === "string" ? d.practicalId.slice(0, 100) : undefined, answer, links, files };
   })
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
@@ -103,11 +103,21 @@ export const submitPractical = createServerFn({ method: "POST" })
     const courses = (content?.data ?? []) as unknown as {
       id: string;
       title: string;
-      modules: { id: string; title: string; practicalTask?: string; notesDoc?: Slide[] }[];
+      modules: {
+        id: string;
+        title: string;
+        practicalTask?: string;
+        practicals?: { id: string; title: string; task: string }[];
+        notesDoc?: Slide[];
+      }[];
     }[];
     const course = courses.find((c) => c.id === data.courseId);
     const mod = course?.modules.find((m) => m.id === data.moduleId);
-    if (!course || !mod?.practicalTask) throw new Error("Для цього модуля немає практичної роботи");
+    const sub = data.practicalId ? mod?.practicals?.find((p) => p.id === data.practicalId) : undefined;
+    const taskId = sub ? sub.id : mod?.id ?? "";
+    const taskTitle = sub ? sub.title : mod?.title ?? "";
+    const taskText = sub ? sub.task : mod?.practicalTask ?? "";
+    if (!course || !mod || !taskText) throw new Error("Для цього модуля немає практичної роботи");
 
     const needsTeacher = !!data.links.trim() || data.files.some((f) => fileKind(f) === "manual");
 
@@ -115,8 +125,8 @@ export const submitPractical = createServerFn({ method: "POST" })
       .from("practical_submissions")
       .insert({
         course_id: course.id,
-        module_id: mod.id,
-        module_title: mod.title,
+        module_id: taskId,
+        module_title: taskTitle,
         user_id: userId,
         email,
         student_name: name,
@@ -133,7 +143,7 @@ export const submitPractical = createServerFn({ method: "POST" })
 
     if (needsTeacher) {
       await admin.from("practical_submissions").update({ status: "manual" }).eq("id", row.id);
-      await notifyTeacher(name, email, course.title, mod.title, "Потрібна ваша перевірка: робота містить посилання або файли, які ШІ не оцінює.");
+      await notifyTeacher(name, email, course.title, taskTitle, "Потрібна ваша перевірка: робота містить посилання або файли, які ШІ не оцінює.");
       return { score: null, manual: true, feedback: "Роботу отримано. Викладач перегляне посилання й файли та виставить оцінку." };
     }
 
@@ -162,12 +172,12 @@ export const submitPractical = createServerFn({ method: "POST" })
       .join("\n\n")
       .slice(0, 12000);
 
-    const prompt = `Ти — викладач, що перевіряє практичну роботу студента з теми «${mod.title}» курсу «${course.title}».
+    const prompt = `Ти — викладач, що перевіряє практичну роботу студента з теми «${taskTitle}» курсу «${course.title}».
 Оціни роботу за 12-бальною шкалою (1–12), спираючись на завдання та матеріали лекції. Будь справедливим і доброзичливим. Якщо робота порожня або не стосується завдання — став 1–3.
 Відповідай ЛИШЕ JSON без пояснень навколо: {"score": число, "feedback": "пояснення українською, 3–6 речень: що добре, що варто покращити"}
 
 ЗАВДАННЯ:
-${mod.practicalTask}
+${taskText}
 
 МАТЕРІАЛИ ЛЕКЦІЇ:
 ${notes || "(немає)"}
@@ -219,17 +229,17 @@ ${image ? "\nСтудент також додав зображення (див. 
         .from("practical_submissions")
         .update({ status: "manual", feedback: null })
         .eq("id", row.id);
-      await notifyTeacher(name, email, course.title, mod.title, "Потрібна ваша перевірка: автоматична оцінка не вдалася.");
+      await notifyTeacher(name, email, course.title, taskTitle, "Потрібна ваша перевірка: автоматична оцінка не вдалася.");
       return { score: null, manual: true, feedback: "Роботу збережено. Автоматична перевірка зараз недоступна — викладач оцінить її вручну." };
     }
 
     await admin.from("practical_submissions").update({ status: "graded", ai_score: score, feedback }).eq("id", row.id);
-    await notifyTeacher(name, email, course.title, mod.title, `ШІ оцінив роботу: ${score}/12. За потреби ви можете змінити оцінку.\n\nПояснення ШІ:\n${feedback}`);
+    await notifyTeacher(name, email, course.title, taskTitle, `ШІ оцінив роботу: ${score}/12. За потреби ви можете змінити оцінку.\n\nПояснення ШІ:\n${feedback}`);
     try {
       await sendGmail(
         email,
-        `Практична робота: ${mod.title} — ${score}/12`,
-        `Вітаю, ${name}!\n\nВашу практичну роботу з теми «${mod.title}» (курс «${course.title}») перевірено.\n\nОцінка: ${score} з 12\n\n${feedback}\n\n${signature}`,
+        `Практична робота: ${taskTitle} — ${score}/12`,
+        `Вітаю, ${name}!\n\nВашу практичну роботу з теми «${taskTitle}» (курс «${course.title}») перевірено.\n\nОцінка: ${score} з 12\n\n${feedback}\n\n${signature}`,
       );
     } catch (e) {
       console.error(e);
