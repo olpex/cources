@@ -30,7 +30,7 @@ function xmlText(xml: string, tag: string) {
   const re = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, "g");
   const out: string[] = [];
   let m: RegExpExecArray | null;
-  while ((m = re.exec(xml))) out.push(m[1]);
+  while ((m = re.exec(xml))) out.push(m[1] ?? "");
   return out
     .join(" ")
     .replace(/&lt;/g, "<")
@@ -43,13 +43,13 @@ async function officeText(bytes: Uint8Array, kind: "docx" | "xlsx"): Promise<str
   const { unzipSync, strFromU8 } = await import("fflate");
   const files = unzipSync(bytes);
   if (kind === "docx") {
-    const xml = files["word/document.xml"] ? strFromU8(files["word/document.xml"]) : "";
+    const doc = files["word/document.xml"]; const xml = doc ? strFromU8(doc) : "";
     return xmlText(xml.replace(/<\/w:p>/g, "</w:p>\n"), "w:t");
   }
   const parts: string[] = [];
-  if (files["xl/sharedStrings.xml"]) parts.push(xmlText(strFromU8(files["xl/sharedStrings.xml"]), "t"));
+  const ss = files["xl/sharedStrings.xml"]; if (ss) parts.push(xmlText(strFromU8(ss), "t"));
   for (const k of Object.keys(files).filter((k) => /^xl\/worksheets\/sheet\d+\.xml$/.test(k))) {
-    parts.push(`[${k.split("/").pop()}] ` + xmlText(strFromU8(files[k]), "v"));
+    const sheet = files[k]; if (sheet) parts.push(`[${k.split("/").pop()}] ` + xmlText(strFromU8(sheet), "v"));
   }
   return parts.join("\n");
 }
