@@ -177,6 +177,7 @@ export type Database = {
           created_at: string
           email: string
           feedback: string | null
+          files: Json
           has_image: boolean
           id: string
           links: string
@@ -194,6 +195,7 @@ export type Database = {
           created_at?: string
           email: string
           feedback?: string | null
+          files?: Json
           has_image?: boolean
           id?: string
           links?: string
@@ -211,6 +213,7 @@ export type Database = {
           created_at?: string
           email?: string
           feedback?: string | null
+          files?: Json
           has_image?: boolean
           id?: string
           links?: string
