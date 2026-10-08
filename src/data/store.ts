@@ -25,6 +25,8 @@ export type ModuleItem = {
   testUrl?: string;
   /** task text for AI-graded practical work */
   practicalTask?: string;
+  /** several practical tasks (Google Doc sub-tabs), keyed by sub-tab id */
+  practicals?: { id: string; title: string; task: string }[];
   /** false = module is shown but locked for students */
   active?: boolean;
   /** extra links (Drive, OneDrive, Gemini, Claude…) */
@@ -184,6 +186,7 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       ...(m.selfCheckUrl ? { selfCheckUrl: m.selfCheckUrl } : {}),
       ...(m.testUrl ? { testUrl: m.testUrl } : {}),
       ...(m.practicalTask ? { practicalTask: m.practicalTask } : {}),
+      ...(m.practicals?.length ? { practicals: m.practicals } : {}),
     };
     if (!prev) {
       return {
@@ -204,9 +207,10 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       (prev.selfCheckUrl ?? undefined) === m.selfCheckUrl &&
       (prev.testUrl ?? undefined) === m.testUrl &&
       (prev.practicalTask ?? undefined) === m.practicalTask &&
+      JSON.stringify(prev.practicals ?? []) === JSON.stringify(m.practicals ?? []) &&
       sameSlides(prev.notesDoc, m.slides);
     if (unchanged) return prev;
-    const { summaryUrl: _s, selfCheckUrl: _c, testUrl: _t, practicalTask: _p, ...rest } = prev;
+    const { summaryUrl: _s, selfCheckUrl: _c, testUrl: _t, practicalTask: _p, practicals: _pp, ...rest } = prev;
     return {
       ...rest,
       title: m.title,

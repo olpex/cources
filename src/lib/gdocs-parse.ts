@@ -24,6 +24,8 @@ export type ParsedModule = {
   testUrl?: string;
   /** task text under the «Практична робота» heading */
   practicalTask?: string;
+  /** separate «Практична робота…» sub-tabs, each graded on its own */
+  practicals?: { id: string; title: string; task: string }[];
   slides: ParsedSlide[];
 };
 
@@ -259,8 +261,17 @@ export function parseGoogleDoc(doc: GDocResponse, docId: string): ParsedDoc {
       const children = tab.childTabs ?? [];
       const practicalTabs = children.filter(isPracticalTab);
       if (practicalTabs.length) {
-        const task = practicalTabs.map(practicalTabText).filter(Boolean).join("\n\n");
-        if (task) parsed.practicalTask = task;
+        const list = practicalTabs
+          .map((t) => ({
+            id: t.tabProperties?.tabId ?? t.tabProperties?.title?.trim() ?? "",
+            title: t.tabProperties?.title?.trim() || "Практична робота",
+            task: practicalTabText(t),
+          }))
+          .filter((p) => p.id && p.task);
+        if (list.length) {
+          parsed.practicals = list;
+          delete parsed.practicalTask;
+        }
       }
       modules.push(parsed);
       const rest = children.filter((c) => !isPracticalTab(c));

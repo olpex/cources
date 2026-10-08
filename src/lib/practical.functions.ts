@@ -11,6 +11,7 @@ export type PracticalFile = { path: string; name: string; type: string; size: nu
 type Input = {
   courseId: string;
   moduleId: string;
+  practicalId?: string;
   answer: string;
   links: string;
   files: PracticalFile[];
