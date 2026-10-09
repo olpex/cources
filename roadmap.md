@@ -1,5 +1,5 @@
 - [x] Move forum access before Viber in every course; preserve header feedback.
 - [x] Add a red forum mention and halve the requested section gaps.
 - [x] Verify course section order, links and spacing in the preview.
-- [ ] Shorten practical grading wording and automatically emphasize task titles and section labels.
-- [ ] Add a teacher action to emphasize all practical tasks in each course and verify formatting.
+- [x] Shorten practical grading wording and automatically emphasize task titles and section labels.
+- [x] Add a teacher action to emphasize all practical tasks in each course and verify formatting.

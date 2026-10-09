@@ -6,10 +6,9 @@ export function formatPracticalTask(task: string): string {
     if (/^\s*(?:#{1,6}\s*)?практична\s+робота(?:\s|[№\d.:—–-]|$)/iu.test(plain)) {
       return plain.replace(/^(\s*)(.*?)(\s*)$/, "$1**$2**$3");
     }
-    // Only emphasize whole Ukrainian labels, not parts of other words.
-    const labels = /(?<![\p{L}\p{N}_])(критерії\s+оцінювання|завдання|оцінювання)(?![\p{L}\p{N}_])/giu;
-    return line.split(/(\*\*[^*]+\*\*)/g).map((part) =>
-      part.startsWith("**") && part.endsWith("**") ? part : part.replace(labels, "**$1**"),
-    ).join("");
+    // Emphasize section labels, not the same words used within ordinary sentences.
+    const label = /^(\s*(?:#{1,6}\s*)?)(критерії\s+оцінювання|завдання|оцінювання)(?=\s*[:.\-—–]|\s*$)/iu;
+    if (label.test(plain)) return plain.replace(label, "$1**$2**");
+    return line;
   }).join("\n");
 }
