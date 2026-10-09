@@ -441,7 +441,7 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
                       <td className="py-2 pr-3 text-center">{s.p ?? "—"}</td>
                       <td className="py-2 pr-3 text-center">{s.t ?? "—"}</td>
                       <td className="py-2 text-center">
-                        <span className="rounded-md bg-primary px-2 py-0.5 font-semibold text-primary-foreground">{s.total ?? "—"}</span>
+                        <span className="rounded-md bg-task px-2 py-0.5 font-semibold text-task-foreground">{s.total ?? "—"}</span>
                       </td>
                     </tr>
                     {expanded === s.key &&
