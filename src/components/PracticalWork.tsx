@@ -15,7 +15,7 @@ import { gradePractical, submitPractical, type PracticalFile } from "@/lib/pract
 const BUCKET = "practical-files";
 const MAX_FILES = 5;
 const MAX_SIZE = 50 * 1024 * 1024;
-const ACCEPT = "image/*,audio/*,video/*,.doc,.docx,.xls,.xlsx,.accdb,.mdb";
+const ACCEPT = "image/*,audio/*,video/*,.pdf,application/pdf,.doc,.docx,.xls,.xlsx,.accdb,.mdb";
 
 type Own = { id: string; ai_score: number | null; teacher_score: number | null; feedback: string | null; created_at: string; status: string };
 
@@ -205,7 +205,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Текст, скріншоти, Word і Excel перевіряються автоматично. Якщо є посилання, аудіо, відео чи Access — роботу оцінить викладач. Посилання мають бути відкриті для всіх.
+              Текст, скріншоти, Word, Excel і PDF перевіряються автоматично. Посилання на чати з ШІ-асистентами система спробує відкрити й оцінити сама; якщо не вдасться, а також для музики, відео, аудіо чи Access — роботу оцінить викладач. Посилання мають бути відкриті для всіх.
             </p>
             <Button onClick={() => void send()} disabled={busy}>
               {busy && <Loader2 className="size-4 animate-spin" />}
