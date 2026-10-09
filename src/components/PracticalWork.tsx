@@ -179,7 +179,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
                 className="sr-only"
                 onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }}
               />
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-border bg-secondary p-3">
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-dashed border-primary/50 bg-secondary p-3">
                 <Button type="button" onClick={() => fileRef.current?.click()}>
                   <Paperclip className="size-4" />
                   Прикріпити файли
