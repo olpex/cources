@@ -6,3 +6,4 @@
 - [x] Show formatting confirmation and a persistent submission receipt in the practical dialog; verify both.
 - [x] Bold «Що здати» in practical tasks via the shared formatter and the «Акцентувати структуру» action; verified in preview.
 - [x] Show student-specific awaiting-grading badges and pending works; verified live teacher display and student 2 → 1 → hidden updates with test responses.
+- [x] Unify short practical-button topics and consecutive numbering per course; include in structure action; verified all course sequences, original dialog title, confirmation and narrow-screen button fit.
