@@ -1,6 +1,6 @@
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronRight, FileText, Hammer, Loader2, Trophy, X } from "lucide-react";
+import { ChevronRight, FileText, Hammer, Loader2, Paperclip, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -58,6 +58,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
   const [links, setLinks] = useState("");
   const [fullName, setFullName] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<Own | null>(null);
 
@@ -168,9 +169,27 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
             />
             <div className="text-sm">
               <label className="mb-1 block text-muted-foreground">
-                Файли: скріншоти, Word, Excel, Access, аудіо, відео (до {MAX_FILES} файлів, кожен до 50 МБ)
+                Файли: скріншоти, Word, Excel, Access, аудіо, відео
               </label>
-              <Input type="file" multiple accept={ACCEPT} onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
+              <input
+                ref={fileRef}
+                type="file"
+                multiple
+                accept={ACCEPT}
+                className="sr-only"
+                onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }}
+              />
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border-2 border-dashed border-primary/50 bg-secondary p-3">
+                <Button type="button" onClick={() => fileRef.current?.click()}>
+                  <Paperclip className="size-4" />
+                  Прикріпити файли
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {files.length > 0
+                    ? `Вибрано файлів: ${files.length} з ${MAX_FILES}`
+                    : `до ${MAX_FILES} файлів, кожен до 50 МБ`}
+                </span>
+              </div>
               {files.length > 0 && (
                 <ul className="mt-2 space-y-1">
                   {files.map((f, i) => (
