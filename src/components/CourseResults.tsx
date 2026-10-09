@@ -212,12 +212,12 @@ export function CourseResults({
         className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
         aria-expanded={open}
       >
-        <span className="flex items-center gap-2 font-semibold text-destructive">
-          <Award className="size-5 text-destructive" /> Результати тестів курсу
-          {rows && <span className="text-sm font-normal text-destructive">({visibleCount})</span>}
+        <span className="flex items-center gap-2 font-semibold text-task">
+          <Award className="size-5 text-task" /> Результати тестів курсу
+          {rows && <span className="text-sm font-normal text-task">({visibleCount})</span>}
           {hasNew && (
             <BellRing
-              className="size-5 animate-bounce text-destructive"
+              className="size-5 animate-bounce text-task"
               aria-label="З'явилися нові результати тестів"
             />
           )}
@@ -296,7 +296,7 @@ export function CourseResults({
                                       {edit && (
                                         <input
                                           type="checkbox"
-                                          className="mr-2 align-middle accent-destructive"
+                                          className="mr-2 align-middle accent-task"
                                           checked={picked.has(resultKey(r))}
                                           onChange={() => pick(resultKey(r))}
                                           aria-label="Позначити результат"
