@@ -121,6 +121,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
         uploaded.push({ path, name: f.name, type: f.type, size: f.size });
       }
       const r = await submit({ data: { courseId, moduleId, studentName: fullName, ...(practicalId ? { practicalId } : {}), answer, links, files: uploaded } });
+      window.dispatchEvent(new Event("practical-results-changed"));
       toast.success(r.score ? `Оцінка: ${r.score} з 12` : "Роботу надіслано викладачу на перевірку");
       setReceipt(r.manual
         ? "Роботу надіслано на перевірку викладачем. Очікуйте на результат на Вашу електронну пошту й на його відображення у секції «Результати практичних робіт»."
@@ -356,6 +357,7 @@ function ReviewDialog({ id, onClose, onSaved }: { id: string; onClose: () => voi
 }
 
 export function PracticalResults({ courseId, edit, modules }: { courseId: string; edit: boolean; modules: string[] }) {
+  const { user } = useAuth();
   const loadSummary = useServerFn(fetchCourseSummary);
   const [students, setStudents] = useState<SummaryRow[]>([]);
   const [tick, setTick] = useState(0);
@@ -369,16 +371,28 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
   const load = useCallback(async () => {
     const { data } = await supabase.rpc("practical_scores", { _course_id: courseId });
     setRows((data as Score[]) ?? []);
-    if (edit) {
-      const { data: p } = await supabase
+    if (user) {
+      let query = supabase
         .from("practical_submissions")
-        .select("id, module_id, module_title, student_name, created_at")
+        .select("id, user_id, module_id, module_title, student_name, created_at, status")
         .eq("course_id", courseId)
-        .in("status", ["manual", "error", "pending"])
         .order("created_at", { ascending: false });
-      setPending(((p ?? []) as Omit<Score, "score">[]).map((r) => ({ ...r, score: null })));
+      if (!edit) query = query.eq("user_id", user.id);
+      const { data: p, error } = await query;
+      if (!error) {
+        const seen = new Set<string>();
+        const latest = (p ?? []).filter((r) => {
+          const key = `${r.user_id}:${r.module_id}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return r.status !== "graded";
+        });
+        setPending(latest.map((r) => ({ ...r, score: null })));
+      }
+    } else {
+      setPending([]);
     }
-  }, [courseId, edit]);
+  }, [courseId, edit, user?.id]);
 
   useEffect(() => {
     const run = () =>
@@ -386,16 +400,29 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
         .then(setStudents)
         .catch(() => {});
     void run();
-    const t = window.setInterval(run, 60000);
-    return () => window.clearInterval(t);
+    const t = window.setInterval(run, 10000);
+    window.addEventListener("practical-results-changed", run);
+    window.addEventListener("focus", run);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener("practical-results-changed", run);
+      window.removeEventListener("focus", run);
+    };
   }, [loadSummary, courseId, modulesKey, rows.length, tick]);
 
 
 
   useEffect(() => {
     void load();
-    const t = window.setInterval(() => void load(), 30000);
-    return () => window.clearInterval(t);
+    const refresh = () => void load();
+    const t = window.setInterval(refresh, 10000);
+    window.addEventListener("practical-results-changed", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(t);
+      window.removeEventListener("practical-results-changed", refresh);
+      window.removeEventListener("focus", refresh);
+    };
   }, [load]);
 
   // Deleting a work removes every attempt of that student for that task,
@@ -418,16 +445,16 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
     setTick((n) => n + 1);
   };
 
-  if (!rows.length && !pending.length) return null;
+  if (!students.length && !pending.length) return null;
 
   return (
     <div className="mb-6 rounded-2xl border border-border bg-card p-4">
       <button className="flex w-full items-center gap-2 text-left font-semibold" onClick={() => setOpen((o) => !o)}>
         <Trophy className="size-5 text-task" />
         <span className="text-task">Результати практичних робіт ({rows.length})</span>
-        {edit && pending.length > 0 && (
-          <span className="ml-auto rounded-full bg-task px-2 text-xs text-task-foreground">
-            на перевірку: {pending.length}
+        {pending.length > 0 && (
+          <span className="ml-auto shrink-0 rounded-full bg-task px-2 text-xs text-task-foreground">
+            {edit ? "на перевірку" : "на оцінювання"}: {pending.length}
           </span>
         )}
       </button>
@@ -483,7 +510,11 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
                         <tr key={r.id} className="text-muted-foreground">
                           <td className="py-1 pl-7 pr-3" colSpan={3}>{r.module_title}</td>
                           <td className="py-1 text-center">
-                            <span className="font-semibold text-foreground">{r.score ?? "—"}/12</span>
+                            {r.awaiting ? (
+                              <span className="font-semibold text-task">Очікує на оцінювання</span>
+                            ) : (
+                              <span className="font-semibold text-foreground">{r.score ?? "—"}/12</span>
+                            )}
                             {edit && (
                               <Button size="sm" variant="ghost" onClick={() => setReview(r.id)}>
                                 Переглянути
@@ -507,7 +538,11 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
           </div>
         </>
       )}
-      {review && <ReviewDialog id={review} onClose={() => setReview(null)} onSaved={() => void load()} />}
+      {review && <ReviewDialog id={review} onClose={() => setReview(null)} onSaved={() => {
+        void load();
+        setTick((n) => n + 1);
+        window.dispatchEvent(new Event("practical-results-changed"));
+      }} />}
     </div>
   );
 }

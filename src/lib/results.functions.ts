@@ -40,7 +40,7 @@ export type SummaryRow = {
   p: number | null;
   t: number | null;
   total: number | null;
-  practical: { id: string; module_title: string; score: number | null }[];
+  practical: { id: string; module_title: string; score: number | null; awaiting: boolean }[];
 };
 
 const num = (s: string) => {
@@ -72,24 +72,27 @@ export const fetchCourseSummary = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: subs } = await supabaseAdmin
       .from("practical_submissions")
-      .select("id, user_id, email, module_id, module_title, student_name, ai_score, teacher_score, created_at")
+      .select("id, user_id, email, module_id, module_title, student_name, ai_score, teacher_score, created_at, status")
       .eq("course_id", data.courseId)
-      .eq("status", "graded")
       .order("created_at", { ascending: false });
 
     type Acc = { testName: string; pracName: string; tests: number[]; practical: SummaryRow["practical"]; seen: Set<string> };
     const map = new Map<string, Acc>();
     const get = (email: string) => {
       const k = email.trim().toLowerCase();
-      if (!map.has(k)) map.set(k, { testName: "", pracName: "", tests: [], practical: [], seen: new Set() });
-      return map.get(k)!;
+      const existing = map.get(k);
+      if (existing) return existing;
+      const created: Acc = { testName: "", pracName: "", tests: [], practical: [], seen: new Set() };
+      map.set(k, created);
+      return created;
     };
     for (const r of subs ?? []) {
       const a = get(r.email);
       if (a.seen.has(r.module_id)) continue; // latest attempt only
       a.seen.add(r.module_id);
       if (!a.pracName) a.pracName = r.student_name;
-      a.practical.push({ id: r.id, module_title: r.module_title, score: r.teacher_score ?? r.ai_score });
+      const awaiting = r.status !== "graded";
+      a.practical.push({ id: r.id, module_title: r.module_title, score: awaiting ? null : (r.teacher_score ?? r.ai_score), awaiting });
     }
     for (const r of sheet) {
       if (!r[0] || !wanted.has(normTitle(r[0])) || !r[4]) continue;
