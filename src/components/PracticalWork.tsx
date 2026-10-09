@@ -337,6 +337,7 @@ function ReviewDialog({ id, onClose, onSaved }: { id: string; onClose: () => voi
 export function PracticalResults({ courseId, edit, modules }: { courseId: string; edit: boolean; modules: string[] }) {
   const loadSummary = useServerFn(fetchCourseSummary);
   const [students, setStudents] = useState<SummaryRow[]>([]);
+  const [tick, setTick] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const modulesKey = modules.join("|");
   const [rows, setRows] = useState<Score[]>([]);
@@ -366,7 +367,7 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
     void run();
     const t = window.setInterval(run, 60000);
     return () => window.clearInterval(t);
-  }, [loadSummary, courseId, modulesKey, rows.length]);
+  }, [loadSummary, courseId, modulesKey, rows.length, tick]);
 
 
 
@@ -376,12 +377,24 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
     return () => window.clearInterval(t);
   }, [load]);
 
+  // Deleting a work removes every attempt of that student for that task,
+  // so an older attempt never "resurfaces" in the results.
   const removeSubmission = async (id: string) => {
-    if (!window.confirm("Видалити цю практичну роботу? Оцінку буде прибрано з результатів.")) return;
-    const { error } = await supabase.from("practical_submissions").delete().eq("id", id);
+    if (!window.confirm("Видалити цю практичну роботу (усі спроби студента)? Оцінку буде прибрано з результатів.")) return;
+    const { data: one } = await supabase.from("practical_submissions").select("user_id, module_id, course_id").eq("id", id).maybeSingle();
+    const q = supabase.from("practical_submissions").delete();
+    const { error } = one
+      ? await q.eq("user_id", one.user_id).eq("module_id", one.module_id).eq("course_id", one.course_id)
+      : await q.eq("id", id);
     if (error) { toast.error("Не вдалося видалити роботу"); return; }
     toast.success("Роботу видалено");
+    setStudents((list) =>
+      list
+        .map((s) => ({ ...s, practical: s.practical.filter((r) => r.id !== id) }))
+        .filter((s) => s.practical.length),
+    );
     void load();
+    setTick((n) => n + 1);
   };
 
   if (!rows.length && !pending.length) return null;
