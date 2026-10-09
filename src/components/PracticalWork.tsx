@@ -41,7 +41,7 @@ export function PracticalButton(props: { courseId: string; moduleId: string; pra
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button size="sm" variant="task" onClick={() => setOpen(true)}>
         <Hammer className="size-4" />
         {props.practicalId ? props.title : "Практична робота"}
       </Button>

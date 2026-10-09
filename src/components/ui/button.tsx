@@ -13,6 +13,7 @@ const buttonVariants = cva(
         destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         viber: "bg-viber text-viber-foreground shadow hover:bg-viber/90",
         forum: "bg-forum text-forum-foreground shadow hover:bg-forum/90",
+        task: "bg-task text-task-foreground shadow hover:bg-task/90",
         outline:
           "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
