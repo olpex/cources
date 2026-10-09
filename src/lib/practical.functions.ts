@@ -209,7 +209,6 @@ export const submitPractical = createServerFn({ method: "POST" })
     const taskText = sub ? sub.task : mod?.practicalTask ?? "";
     if (!course || !mod || !taskText) throw new Error("Для цього модуля немає практичної роботи");
 
-    const needsTeacher = !!data.links.trim() || data.files.some((f) => fileKind(f) === "manual");
 
     const { data: row, error } = await supabase
       .from("practical_submissions")
@@ -231,16 +230,19 @@ export const submitPractical = createServerFn({ method: "POST" })
 
     const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 
-    if (needsTeacher) {
-      await admin.from("practical_submissions").update({ status: "manual" }).eq("id", row.id);
-      await notifyTeacher(name, email, course.title, taskTitle, "Потрібна ваша перевірка: робота містить посилання або файли, які ШІ не оцінює.");
-      return { score: null, manual: true, feedback: "Роботу отримано. Викладач перегляне посилання й файли та виставить оцінку." };
+    const reasons: string[] = data.files.filter((f) => fileKind(f) === "manual").map((f) => `файл «${f.name}» (аудіо / відео / Access / старий формат)`);
+
+    // Links: try to read each one; media or unreadable pages go to the teacher.
+    let docsText = "";
+    const urls = [...new Set(data.links.split(/\s+/).map((s) => s.trim()).filter(Boolean))].slice(0, 5);
+    for (const r of await Promise.all(urls.map(readLink))) {
+      if (r.kind === "text") docsText += `\n\n--- Вміст за посиланням ${r.url} ---\n${r.text.slice(0, 12000)}`;
+      else reasons.push(`посилання ${r.url}: ${r.reason}`);
     }
 
-    // Collect content the AI can read: Word/Excel text and the first image.
-    let docsText = "";
+    // Files the AI can read: Word/Excel/PDF text and the first image.
     let image: string | null = null;
-    for (const f of data.files) {
+    if (!reasons.length) for (const f of data.files) {
       const kind = fileKind(f);
       if (kind === "image" && image) continue;
       try {
@@ -251,10 +253,21 @@ export const submitPractical = createServerFn({ method: "POST" })
           if (bytes.length <= 4 * 1024 * 1024) image = `data:${f.type};base64,${toBase64(bytes)}`;
         } else if (kind === "docx" || kind === "xlsx") {
           docsText += `\n\n--- Файл «${f.name}» ---\n${(await officeText(bytes, kind)).slice(0, 15000)}`;
+        } else if (kind === "pdf") {
+          const t = await pdfText(bytes);
+          if (t.length < 50) reasons.push(`файл «${f.name}»: PDF без тексту (скан або зображення)`);
+          else docsText += `\n\n--- Файл «${f.name}» ---\n${t.slice(0, 15000)}`;
         }
       } catch (e) {
         console.error("file read failed", f.name, e);
+        reasons.push(`файл «${f.name}»: не вдалося прочитати`);
       }
+    }
+
+    if (reasons.length) {
+      await admin.from("practical_submissions").update({ status: "manual" }).eq("id", row.id);
+      await notifyTeacher(name, email, course.title, taskTitle, `Потрібна ваша перевірка. ШІ не зміг оцінити:\n- ${reasons.join("\n- ")}`);
+      return { score: null, manual: true, feedback: "Роботу отримано. Викладач перегляне посилання й файли та виставить оцінку." };
     }
 
     const notes = (mod.notesDoc ?? [])
