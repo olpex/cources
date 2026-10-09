@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronRight, FileText, Hammer, Loader2, Paperclip, Trash2, Trophy, X } from "lucide-react";
+import { CheckCircle2, ChevronRight, FileText, Hammer, Loader2, Paperclip, Trash2, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -62,6 +62,12 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<Own | null>(null);
+  const [receipt, setReceipt] = useState<string | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (receipt) receiptRef.current?.scrollIntoView({ block: "nearest" });
+  }, [receipt]);
 
   const loadOwn = useCallback(async () => {
     if (!user) return;
@@ -104,6 +110,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
       return;
     }
     setBusy(true);
+    setReceipt(null);
     try {
       const uploaded: PracticalFile[] = [];
       for (const f of files) {
@@ -115,6 +122,9 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
       }
       const r = await submit({ data: { courseId, moduleId, studentName: fullName, ...(practicalId ? { practicalId } : {}), answer, links, files: uploaded } });
       toast.success(r.score ? `Оцінка: ${r.score} з 12` : "Роботу надіслано викладачу на перевірку");
+      setReceipt(r.manual
+        ? "Роботу надіслано на перевірку викладачем. Очікуйте на результат на Вашу електронну пошту й на його відображення у секції «Результати практичних робіт»."
+        : `Роботу перевірено. Оцінка: ${r.score} з 12. Результат доступний у секції «Результати практичних робіт»; повідомлення з оцінкою надсилається на Вашу електронну пошту.`);
       setAnswer("");
       setLinks("");
       setFiles([]);
@@ -212,6 +222,12 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
             <p className="text-xs text-muted-foreground">
               Текст, скріншоти, Word, Excel і PDF перевіряються автоматично. Посилання на чати з ШІ-асистентами система спробує відкрити й оцінити сама; якщо не вдасться, а також для музики, відео, аудіо чи Access — роботу оцінить викладач. Посилання мають бути відкриті для всіх.
             </p>
+            {receipt && (
+              <div ref={receiptRef} role="status" aria-live="polite" className="flex items-start gap-3 rounded-lg border border-task bg-secondary p-4 text-sm">
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-task" />
+                <p>{receipt}</p>
+              </div>
+            )}
             <Button onClick={() => void send()} disabled={busy}>
               {busy && <Loader2 className="size-4 animate-spin" />}
               {busy ? "Надсилаємо…" : "Надіслати на перевірку"}
