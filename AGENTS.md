@@ -13,3 +13,4 @@
 - Send formatted forum broadcasts as multipart/alternative with escaped HTML and a plain-text fallback so email clients retain readable content.
 - Render forum access in the shared course layout and style its CTA with a semantic Button variant, so new courses inherit it without stored content changes.
 - Use the shared idempotent practical-task formatter for display, content imports and course-wide teacher formatting; render emphasis as safe React text, never raw HTML, to keep old and new tasks consistent without changing task IDs.
+- Mount the shared Sonner Toaster once in the root layout so action feedback is visible across all pages.
