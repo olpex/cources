@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import {
   BookOpen,
+  Bold,
   ClipboardCheck,
   ListChecks,
   ExternalLink,
@@ -62,6 +63,8 @@ import { ImportDocDialog } from "@/components/ImportDocDialog";
 import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPracticalTask } from "@/lib/practical-format";
+import { toast } from "sonner";
 
 type Confirm = { title: string; description: string; action: () => void } | null;
 
@@ -478,6 +481,24 @@ export function CoursesLanding() {
             </div>
             {edit && syncError?.id === course.id && (
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
+            )}
+
+            {admin && (
+              <div className="mb-4">
+                <Button size="sm" variant="outline" onClick={() => {
+                  updateCourse(course.id, {
+                    modules: course.modules.map((m) => ({
+                      ...m,
+                      ...(m.practicalTask ? { practicalTask: formatPracticalTask(m.practicalTask) } : {}),
+                      ...(m.practicals ? { practicals: m.practicals.map((p) => ({ ...p, task: formatPracticalTask(p.task) })) } : {}),
+                    })),
+                  });
+                  toast.success("Структуру практичних робіт акцентовано");
+                }}>
+                  <Bold className="size-4" />
+                  Акцентувати структуру
+                </Button>
+              </div>
             )}
 
             {!courseLocked && (

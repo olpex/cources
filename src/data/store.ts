@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/courses";
 import { extractDocId, type ParsedDoc, type ParsedSlide } from "@/lib/gdocs-parse";
 import { supabase } from "@/integrations/supabase/client";
+import { formatPracticalTask } from "@/lib/practical-format";
 
 
 export type ModuleItem = {
@@ -185,8 +186,8 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       ...(m.summaryUrl ? { summaryUrl: m.summaryUrl } : {}),
       ...(m.selfCheckUrl ? { selfCheckUrl: m.selfCheckUrl } : {}),
       ...(m.testUrl ? { testUrl: m.testUrl } : {}),
-      ...(m.practicalTask ? { practicalTask: m.practicalTask } : {}),
-      ...(m.practicals?.length ? { practicals: m.practicals } : {}),
+      ...(m.practicalTask ? { practicalTask: formatPracticalTask(m.practicalTask) } : {}),
+      ...(m.practicals?.length ? { practicals: m.practicals.map((p) => ({ ...p, task: formatPracticalTask(p.task) })) } : {}),
     };
     if (!prev) {
       return {
@@ -206,8 +207,8 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       (prev.summaryUrl ?? undefined) === m.summaryUrl &&
       (prev.selfCheckUrl ?? undefined) === m.selfCheckUrl &&
       (prev.testUrl ?? undefined) === m.testUrl &&
-      (prev.practicalTask ?? undefined) === m.practicalTask &&
-      JSON.stringify(prev.practicals ?? []) === JSON.stringify(m.practicals ?? []) &&
+      (prev.practicalTask ?? undefined) === extras.practicalTask &&
+      JSON.stringify(prev.practicals ?? []) === JSON.stringify(extras.practicals ?? []) &&
       sameSlides(prev.notesDoc, m.slides);
     if (unchanged) return prev;
     const { summaryUrl: _s, selfCheckUrl: _c, testUrl: _t, practicalTask: _p, practicals: _pp, ...rest } = prev;
