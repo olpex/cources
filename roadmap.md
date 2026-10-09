@@ -3,4 +3,4 @@
 - [x] Verify course section order, links and spacing in the preview.
 - [x] Shorten practical grading wording and automatically emphasize task titles and section labels.
 - [x] Add a teacher action to emphasize all practical tasks in each course and verify formatting.
-- [ ] Show formatting confirmation and a persistent submission receipt in the practical dialog; verify both.
+- [x] Show formatting confirmation and a persistent submission receipt in the practical dialog; verify both.
