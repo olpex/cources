@@ -404,6 +404,7 @@ export function CoursesLanding() {
                 {course.subtitle && (
                   <p className="mt-2 text-lg text-primary/80">{course.subtitle}</p>
                 )}
+              </div>
               {edit && (
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5">
