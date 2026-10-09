@@ -12,8 +12,8 @@ export function shortPracticalTopic(title: string, task: string): string {
     });
     topic = clean(instruction ?? "").replace(/^\s*\d+[.)]\s*/, "");
   }
-  const words = topic.split(/\s+/).filter(Boolean).slice(0, 3);
+  const words = topic.split(/[:;]|\s+[—–]\s+/)[0]?.split(/\s+/).filter(Boolean).slice(0, 3) ?? [];
   // Avoid ending a short topic on a connective word.
-  if (words.length > 2 && /^(і|й|та|з|із|у|в|для|на|до|за)$/iu.test(words[words.length - 1] ?? "")) words.pop();
+  if (words.length > 2 && /^(і|й|та|з|із|у|в|для|на|до|за|без|проти|через)$/iu.test(words[words.length - 1] ?? "")) words.pop();
   return words.join(" ").replace(/[,:;.!?—–-]+$/, "") || "Практична робота";
 }
