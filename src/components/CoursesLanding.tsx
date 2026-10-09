@@ -404,11 +404,6 @@ export function CoursesLanding() {
                 {course.subtitle && (
                   <p className="mt-2 text-lg text-primary/80">{course.subtitle}</p>
                 )}
-                {course.description && (
-                  <p className="mt-4 leading-relaxed text-muted-foreground">
-                    {course.description}
-                  </p>
-                )}
               </div>
               {edit && (
                 <div className="flex flex-wrap items-center gap-2">
@@ -496,6 +491,11 @@ export function CoursesLanding() {
                 </div>
               )}
             </div>
+            {course.description && (
+              <p className="-mt-4 mb-8 leading-relaxed text-muted-foreground">
+                {course.description}
+              </p>
+            )}
             {edit && syncError?.id === course.id && (
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
             )}
