@@ -38,13 +38,13 @@ function Linkified({ text }: { text: string }) {
   );
 }
 
-export function PracticalButton(props: { courseId: string; moduleId: string; practicalId?: string; title: string; task: string }) {
+export function PracticalButton(props: { courseId: string; moduleId: string; practicalId?: string; title: string; task: string; buttonLabel: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button size="sm" variant="task" onClick={() => setOpen(true)}>
-        <Hammer className="size-4" />
-        {props.practicalId ? props.title : "Практична робота"}
+      <Button size="sm" variant="task" className="max-w-full min-w-0" title={props.title} aria-label={`Практична робота ${props.buttonLabel}`} onClick={() => setOpen(true)}>
+        <Hammer className="size-4 shrink-0" />
+        <span className="min-w-0 truncate">{props.buttonLabel}</span>
       </Button>
       {open && <PracticalDialog {...props} onClose={() => setOpen(false)} />}
     </>

@@ -3,6 +3,7 @@ import { courses as seedCourses, fetchNotes, type SlideNote } from "@/data/cours
 import { extractDocId, type ParsedDoc, type ParsedSlide } from "@/lib/gdocs-parse";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPracticalTask } from "@/lib/practical-format";
+import { shortPracticalTopic } from "@/lib/practical-label";
 
 
 export type ModuleItem = {
@@ -26,8 +27,10 @@ export type ModuleItem = {
   testUrl?: string;
   /** task text for AI-graded practical work */
   practicalTask?: string;
+  /** Short button-only topic, without numbering. */
+  practicalButtonTitle?: string;
   /** several practical tasks (Google Doc sub-tabs), keyed by sub-tab id */
-  practicals?: { id: string; title: string; task: string }[];
+  practicals?: { id: string; title: string; task: string; buttonTitle?: string }[];
   /** false = module is shown but locked for students */
   active?: boolean;
   /** extra links (Drive, OneDrive, Gemini, Claude…) */
@@ -187,7 +190,8 @@ function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): Cours
       ...(m.selfCheckUrl ? { selfCheckUrl: m.selfCheckUrl } : {}),
       ...(m.testUrl ? { testUrl: m.testUrl } : {}),
       ...(m.practicalTask ? { practicalTask: formatPracticalTask(m.practicalTask) } : {}),
-      ...(m.practicals?.length ? { practicals: m.practicals.map((p) => ({ ...p, task: formatPracticalTask(p.task) })) } : {}),
+      ...(m.practicalTask ? { practicalButtonTitle: shortPracticalTopic(m.title, m.practicalTask) } : {}),
+      ...(m.practicals?.length ? { practicals: m.practicals.map((p) => ({ ...p, task: formatPracticalTask(p.task), buttonTitle: shortPracticalTopic(p.title, p.task) })) } : {}),
     };
     if (!prev) {
       return {

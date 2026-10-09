@@ -64,6 +64,7 @@ import { useContent, type CourseItem, type ModuleItem } from "@/data/store";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPracticalTask } from "@/lib/practical-format";
+import { shortPracticalTopic } from "@/lib/practical-label";
 import { toast } from "sonner";
 
 type Confirm = { title: string; description: string; action: () => void } | null;
@@ -372,6 +373,16 @@ export function CoursesLanding() {
         const courseOff = course.active === false;
         const courseLocked = courseOff && !admin;
         const allModulesClosed = course.modules.every((m) => m.active === false);
+        const practicalNumbers = new Map<string, number>();
+        for (const module of course.modules) {
+          if (module.practicals?.length) {
+            for (const practical of module.practicals) {
+              practicalNumbers.set(`${module.id}:${practical.id}`, practicalNumbers.size + 1);
+            }
+          } else if (module.practicalTask) {
+            practicalNumbers.set(module.id, practicalNumbers.size + 1);
+          }
+        }
         return (
           <section
             key={course.id}
@@ -489,11 +500,11 @@ export function CoursesLanding() {
                   updateCourse(course.id, {
                     modules: course.modules.map((m) => ({
                       ...m,
-                      ...(m.practicalTask ? { practicalTask: formatPracticalTask(m.practicalTask) } : {}),
-                      ...(m.practicals ? { practicals: m.practicals.map((p) => ({ ...p, task: formatPracticalTask(p.task) })) } : {}),
+                      ...(m.practicalTask ? { practicalTask: formatPracticalTask(m.practicalTask), practicalButtonTitle: shortPracticalTopic(m.title, m.practicalTask) } : {}),
+                      ...(m.practicals ? { practicals: m.practicals.map((p) => ({ ...p, task: formatPracticalTask(p.task), buttonTitle: shortPracticalTopic(p.title, p.task) })) } : {}),
                     })),
                   });
-                  toast.success("Структуру практичних робіт акцентовано");
+                  toast.success("Структуру акцентовано, назви кнопок скорочено й пронумеровано");
                 }}>
                   <Bold className="size-4" />
                   Акцентувати структуру
@@ -714,6 +725,7 @@ export function CoursesLanding() {
                           practicalId={p.id}
                           title={p.title}
                           task={p.task}
+                          buttonLabel={`${practicalNumbers.get(`${m.id}:${p.id}`)}. ${shortPracticalTopic(p.buttonTitle || p.title, p.task)}`}
                         />
                       ))}
 
@@ -723,6 +735,7 @@ export function CoursesLanding() {
                           moduleId={m.id}
                           title={m.title}
                           task={m.practicalTask}
+                          buttonLabel={`${practicalNumbers.get(m.id)}. ${shortPracticalTopic(m.practicalButtonTitle || m.title, m.practicalTask)}`}
                         />
                       )}
 
