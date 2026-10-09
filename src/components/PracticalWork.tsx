@@ -58,6 +58,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
   const [links, setLinks] = useState("");
   const [fullName, setFullName] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<Own | null>(null);
 
