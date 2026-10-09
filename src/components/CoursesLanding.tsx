@@ -491,6 +491,11 @@ export function CoursesLanding() {
                 </div>
               )}
             </div>
+            {course.description && (
+              <p className="-mt-4 mb-8 leading-relaxed text-muted-foreground">
+                {course.description}
+              </p>
+            )}
             {edit && syncError?.id === course.id && (
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
             )}
