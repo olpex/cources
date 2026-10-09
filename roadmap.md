@@ -5,3 +5,4 @@
 - [x] Add a teacher action to emphasize all practical tasks in each course and verify formatting.
 - [x] Show formatting confirmation and a persistent submission receipt in the practical dialog; verify both.
 - [x] Bold «Що здати» in practical tasks via the shared formatter and the «Акцентувати структуру» action; verified in preview.
+- [ ] Show student-specific awaiting-grading badges and pending works; keep teacher counts current and verify updates.
