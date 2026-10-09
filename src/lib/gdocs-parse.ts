@@ -1,4 +1,5 @@
 /** Pure parsing helpers for Google Docs API responses (tabs → modules → slides). */
+import { formatPracticalTask } from "./practical-format";
 
 export type NoteBlock = {
   type: "p" | "li" | "h";
@@ -224,7 +225,7 @@ function parseTab(tab: GDocTab, parentTitle?: string): ParsedModule {
 
   const title = tab.tabProperties?.title?.trim() || "Без назви";
   const taskLines = practicalDone ?? practical;
-  const practicalTask = taskLines?.length ? taskLines.join("\n\n") : undefined;
+  const practicalTask = taskLines?.length ? formatPracticalTask(taskLines.join("\n\n")) : undefined;
   return {
     ...(practicalTask ? { practicalTask } : {}),
     tabId: tab.tabProperties?.tabId ?? title,
@@ -250,7 +251,7 @@ function practicalTabText(tab: GDocTab): string {
     const line = [text, ...urls].filter(Boolean).join(" ");
     if (line) lines.push(line);
   }
-  return lines.join("\n\n").trim();
+  return formatPracticalTask(lines.join("\n\n").trim());
 }
 
 export function parseGoogleDoc(doc: GDocResponse, docId: string): ParsedDoc {
