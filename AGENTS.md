@@ -14,3 +14,4 @@
 - Render forum access in the shared course layout and style its CTA with a semantic Button variant, so new courses inherit it without stored content changes.
 - Use the shared idempotent practical-task formatter for display, content imports and course-wide teacher formatting; render emphasis as safe React text, never raw HTML, to keep old and new tasks consistent without changing task IDs.
 - Mount the shared Sonner Toaster once in the root layout so action feedback is visible across all pages.
+- Practical results use latest-attempt status for public grade summaries and RLS-scoped personal/teacher pending counts; refresh on submission, grading, focus and polling so badges reflect ungraded tasks rather than attempt history.
