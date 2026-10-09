@@ -566,7 +566,7 @@ export function CoursesLanding() {
             )}
 
             {!(courseOff && !admin) && course.modules.length > 0 && (
-              <PracticalResults courseId={course.id} edit={edit} modules={course.modules.map((m) => m.title)} />
+              <PracticalResults courseId={course.id} edit={admin} modules={course.modules.map((m) => m.title)} />
             )}
 
             {course.modules.length === 0 && !edit ? (
