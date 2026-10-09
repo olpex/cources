@@ -4,3 +4,4 @@
 - [x] Shorten practical grading wording and automatically emphasize task titles and section labels.
 - [x] Add a teacher action to emphasize all practical tasks in each course and verify formatting.
 - [x] Show formatting confirmation and a persistent submission receipt in the practical dialog; verify both.
+- [x] Bold «Що здати» in practical tasks via the shared formatter and the «Акцентувати структуру» action; verified in preview.
