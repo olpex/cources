@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronRight, FileText, Hammer, Loader2, Paperclip, Trophy, X } from "lucide-react";
+import { ChevronRight, FileText, Hammer, Loader2, Paperclip, Trash2, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -376,15 +376,23 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
     return () => window.clearInterval(t);
   }, [load]);
 
+  const removeSubmission = async (id: string) => {
+    if (!window.confirm("Видалити цю практичну роботу? Оцінку буде прибрано з результатів.")) return;
+    const { error } = await supabase.from("practical_submissions").delete().eq("id", id);
+    if (error) { toast.error("Не вдалося видалити роботу"); return; }
+    toast.success("Роботу видалено");
+    void load();
+  };
+
   if (!rows.length && !pending.length) return null;
 
   return (
     <div className="mb-6 rounded-2xl border border-border bg-card p-4">
       <button className="flex w-full items-center gap-2 text-left font-semibold" onClick={() => setOpen((o) => !o)}>
-        <Trophy className="size-5 text-primary" />
-        Результати практичних робіт ({rows.length})
+        <Trophy className="size-5 text-task" />
+        <span className="text-task">Результати практичних робіт ({rows.length})</span>
         {edit && pending.length > 0 && (
-          <span className="ml-auto rounded-full bg-destructive px-2 text-xs text-destructive-foreground">
+          <span className="ml-auto rounded-full bg-task px-2 text-xs text-task-foreground">
             на перевірку: {pending.length}
           </span>
         )}
@@ -393,7 +401,7 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
         <>
           {edit && pending.length > 0 && (
             <div className="mt-3">
-              <p className="text-sm font-semibold text-destructive">Чекають на вашу перевірку</p>
+              <p className="text-sm font-semibold text-task">Чекають на вашу перевірку</p>
               <ul className="divide-y divide-border text-sm">
                 {pending.map((r) => (
                   <li key={r.id} className="flex items-center justify-between gap-3 py-2">
@@ -401,7 +409,12 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
                       <span className="font-medium">{r.student_name}</span>
                       <span className="text-muted-foreground"> — {r.module_title}</span>
                     </span>
-                    <Button size="sm" onClick={() => setReview(r.id)}>Перевірити</Button>
+                    <span className="flex shrink-0 gap-1">
+                      <Button size="sm" onClick={() => setReview(r.id)}>Перевірити</Button>
+                      <Button size="sm" variant="ghost" aria-label="Видалити роботу" onClick={() => void removeSubmission(r.id)}>
+                        <Trash2 className="size-4 text-destructive" />
+                      </Button>
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -428,7 +441,7 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
                       <td className="py-2 pr-3 text-center">{s.p ?? "—"}</td>
                       <td className="py-2 pr-3 text-center">{s.t ?? "—"}</td>
                       <td className="py-2 text-center">
-                        <span className="rounded-md bg-primary px-2 py-0.5 font-semibold text-primary-foreground">{s.total ?? "—"}</span>
+                        <span className="rounded-md bg-task px-2 py-0.5 font-semibold text-task-foreground">{s.total ?? "—"}</span>
                       </td>
                     </tr>
                     {expanded === s.key &&
@@ -440,6 +453,11 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
                             {edit && (
                               <Button size="sm" variant="ghost" onClick={() => setReview(r.id)}>
                                 Переглянути
+                              </Button>
+                            )}
+                            {edit && (
+                              <Button size="sm" variant="ghost" aria-label="Видалити роботу" onClick={() => void removeSubmission(r.id)}>
+                                <Trash2 className="size-4 text-destructive" />
                               </Button>
                             )}
                           </td>
