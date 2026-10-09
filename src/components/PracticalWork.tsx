@@ -11,6 +11,7 @@ import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchCourseSummary, type SummaryRow } from "@/lib/results.functions";
 import { gradePractical, submitPractical, type PracticalFile } from "@/lib/practical.functions";
+import { formatPracticalTask } from "@/lib/practical-format";
 
 const BUCKET = "practical-files";
 const MAX_FILES = 5;
@@ -131,10 +132,14 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{practicalId ? title : `Практична робота — ${title}`}</DialogTitle>
+          <DialogTitle className="font-bold">{practicalId ? title : `Практична робота — ${title}`}</DialogTitle>
         </DialogHeader>
         <div className="whitespace-pre-line rounded-xl bg-secondary p-4 text-sm">
-          <Linkified text={task} />
+          {formatPracticalTask(task).split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+            part.startsWith("**") && part.endsWith("**") ? (
+              <strong key={i} className="font-bold"><Linkified text={part.slice(2, -2)} /></strong>
+            ) : <Linkified key={i} text={part} />,
+          )}
         </div>
 
         {last && (
