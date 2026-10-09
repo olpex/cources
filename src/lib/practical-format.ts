@@ -7,7 +7,7 @@ export function formatPracticalTask(task: string): string {
       return plain.replace(/^(\s*)(.*?)(\s*)$/, "$1**$2**$3");
     }
     // Emphasize section labels, not the same words used within ordinary sentences.
-    const label = /^(\s*(?:#{1,6}\s*)?)(критерії\s+оцінювання|що\s+здати|завдання|оцінювання)(?=\s*[:.\-—–]|\s*$)/iu;
+    const label = /^(\s*(?:#{1,6}\s*)?)(критерії\s+оцінювання|теоретична\s+основа|що\s+здати|завдання|оцінювання|мета|модель|перевірка)(?=\s*[:.\-—–]|\s*$)/iu;
     if (label.test(plain)) return plain.replace(label, "$1**$2**");
     return line;
   }).join("\n");
