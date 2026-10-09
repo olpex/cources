@@ -25,8 +25,96 @@ const fileKind = (f: PracticalFile) => {
   if (f.type.startsWith("image/")) return "image";
   if (n.endsWith(".docx")) return "docx";
   if (n.endsWith(".xlsx")) return "xlsx";
+  if (n.endsWith(".pdf") || f.type === "application/pdf") return "pdf";
   return "manual"; // audio, video, Access, old .doc/.xls — teacher checks by hand
 };
+
+async function pdfText(bytes: Uint8Array): Promise<string> {
+  const { extractText, getDocumentProxy } = await import("unpdf");
+  const pdf = await getDocumentProxy(bytes);
+  const { text } = await extractText(pdf, { mergePages: true });
+  return String(text ?? "").replace(/\s+\n/g, "\n").trim();
+}
+
+// ---- Shared links ----
+// Principle (no fixed list of services): open every public link and look at what it is.
+// - A page whose metadata or content type says audio/video/music → teacher reviews it.
+// - A page that yields enough readable text (e.g. a shared chat with any AI assistant) → AI grades the text.
+// - Anything that can't be opened or gives too little text → teacher reviews it.
+const MIN_LINK_TEXT = 400;
+
+function isPublicHttpUrl(raw: string): URL | null {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return null;
+    const h = u.hostname.toLowerCase();
+    if (h === "localhost" || h.endsWith(".local") || h.endsWith(".internal") || /^(\d+\.){3}\d+$/.test(h) || h.includes(":")) return null;
+    return u;
+  } catch {
+    return null;
+  }
+}
+
+function decodeEntities(s: string) {
+  return s
+    .replace(/&nbsp;/g, " ").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&");
+}
+
+function collectJsonStrings(v: unknown, out: string[]) {
+  if (typeof v === "string") { if (v.length > 40 && /\s/.test(v) && !/^https?:\/\//.test(v)) out.push(v); return; }
+  if (Array.isArray(v)) { for (const x of v) collectJsonStrings(x, out); return; }
+  if (v && typeof v === "object") for (const x of Object.values(v)) collectJsonStrings(x, out);
+}
+
+type LinkResult = { url: string; kind: "text"; text: string } | { url: string; kind: "manual"; reason: string };
+
+async function readLink(raw: string): Promise<LinkResult> {
+  const u = isPublicHttpUrl(raw);
+  if (!u) return { url: raw, kind: "manual", reason: "некоректне посилання" };
+  try {
+    const res = await fetch(u.toString(), {
+      redirect: "follow",
+      signal: AbortSignal.timeout(12000),
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; CoursePracticalChecker/1.0)", Accept: "text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.5" },
+    });
+    if (!res.ok) return { url: raw, kind: "manual", reason: `сторінка недоступна (${res.status})` };
+    const ct = (res.headers.get("content-type") ?? "").toLowerCase();
+    if (/^(audio|video|image)\//.test(ct)) return { url: raw, kind: "manual", reason: "медіафайл" };
+    if (!/text\/|json|xml/.test(ct)) return { url: raw, kind: "manual", reason: "непідтримуваний формат" };
+    const html = (await res.text()).slice(0, 3_000_000);
+
+    const meta = (p: string) => html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${p}["'][^>]*content=["']([^"']*)`, "i"))?.[1] ?? "";
+    const ogType = meta("og:type").toLowerCase();
+    if (/video|music|audio|song/.test(ogType) || meta("og:video") || meta("og:audio") || meta("og:video:url") || meta("twitter:player"))
+      return { url: raw, kind: "manual", reason: "аудіо / відео / музика" };
+
+    // Visible text
+    const visible = decodeEntities(
+      html
+        .replace(/<(script|style|noscript|svg|head)[\s\S]*?<\/\1>/gi, " ")
+        .replace(/<\/(p|div|li|h\d|pre|tr|br)>/gi, "\n")
+        .replace(/<[^>]+>/g, " "),
+    ).replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim();
+
+    // Many chat pages embed the conversation as JSON inside <script> tags.
+    const jsonParts: string[] = [];
+    for (const m of html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/gi)) {
+      const body = (m[1] ?? "").trim();
+      if (!body.startsWith("{") && !body.startsWith("[")) continue;
+      try { collectJsonStrings(JSON.parse(body), jsonParts); } catch { /* ignore */ }
+    }
+    const jsonText = [...new Set(jsonParts)].join("\n");
+    const title = decodeEntities(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").trim();
+    const desc = decodeEntities(meta("og:description") || meta("description"));
+    const best = (jsonText.length > visible.length ? jsonText : visible).slice(0, 20000);
+    if (best.length < MIN_LINK_TEXT) return { url: raw, kind: "manual", reason: "не вдалося прочитати вміст (сторінка вимагає входу або завантажується в браузері)" };
+    return { url: raw, kind: "text", text: `${title}\n${desc}\n${best}`.trim() };
+  } catch (e) {
+    console.error("link read failed", raw, e);
+    return { url: raw, kind: "manual", reason: "не вдалося відкрити" };
+  }
+}
 
 function xmlText(xml: string, tag: string) {
   const re = new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, "g");
