@@ -67,7 +67,7 @@ export function CourseResults({
 
   const seenKey = `resultsSeenRows:v2:${courseId}`;
   const modulesKey = modules.join("|");
-  const hiddenKey = hidden.join("|");
+  const hiddenKey = JSON.stringify(hidden);
   const busyRef = useRef(false);
   const mountedRef = useRef(true);
   const latestRef = useRef<ResultRow[] | null>(null);
@@ -85,7 +85,7 @@ export function CourseResults({
     let active = true;
     const load = resultLoadRef.current;
     const updateBell = (list: ResultRow[]) => {
-      setHasNew(hasUnseenResults(list, readSeenResults(localStorage, seenKey), hiddenKey ? hiddenKey.split("|") : []));
+      setHasNew(hasUnseenResults(list, readSeenResults(localStorage, seenKey), JSON.parse(hiddenKey) as string[]));
     };
     const check = async () => {
       if (busyRef.current) return;
@@ -231,7 +231,6 @@ export function CourseResults({
             <BellRing
               className="size-5 shrink-0 animate-bounce text-task motion-reduce:animate-none"
               role="img"
-              title="З'явилися нові результати тестів"
               aria-label="З'явилися нові результати тестів"
             />
           )}
