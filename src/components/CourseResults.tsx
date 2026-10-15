@@ -3,11 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Award, BellRing, ChevronDown, ChevronRight, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchCourseResults, type ResultRow } from "@/lib/results.functions";
-
-function parseTime(t: string) {
-  const v = Date.parse(t);
-  return Number.isNaN(v) ? 0 : v;
-}
+import { hasUnseenResults, parseResultTime as parseTime, readSeenResults, resultKey } from "@/lib/test-results-state";
 
 function parseScore(s: string): number | null {
   const m = s.replace(",", ".").match(/-?\d+(\.\d+)?/);
@@ -37,7 +33,7 @@ export function displayName(variants: string[]) {
   return best;
 }
 
-export const resultKey = (r: ResultRow) => [r.module, r.time, r.score, r.name].map((x) => x.trim()).join("|");
+export { resultKey };
 
 type Group = { key: string; name: string; rows: ResultRow[]; avg: number | null };
 
@@ -69,9 +65,9 @@ export function CourseResults({
   const resultLoadRef = useRef(load);
   resultLoadRef.current = load;
 
-  const seenKey = `resultsSeen:${courseId}`;
+  const seenKey = `resultsSeenRows:v2:${courseId}`;
   const modulesKey = modules.join("|");
-  const hiddenKey = hidden.join("|");
+  const hiddenKey = JSON.stringify(hidden);
   const busyRef = useRef(false);
   const mountedRef = useRef(true);
   const latestRef = useRef<ResultRow[] | null>(null);
@@ -83,33 +79,24 @@ export function CourseResults({
     };
   }, []);
 
-  const maxTime = (list: ResultRow[]) =>
-    list.reduce((a, r) => Math.max(a, parseTime(r.time)), 0);
-
-  // Background check for new test submissions: polls the results sheet
-  // once a minute and shows the bell when unseen results appear.
+  // Track actual rows, not the newest timestamp: Sheets dates are localized
+  // and an unread result must stay unread across reloads and background checks.
   useEffect(() => {
+    let active = true;
     const load = resultLoadRef.current;
+    const updateBell = (list: ResultRow[]) => {
+      setHasNew(hasUnseenResults(list, readSeenResults(localStorage, seenKey), JSON.parse(hiddenKey) as string[]));
+    };
     const check = async () => {
       if (busyRef.current) return;
       busyRef.current = true;
       try {
         const r = await load({ data: { modules: modulesKey.split("|") } });
         const sorted = r.sort((a, b) => parseTime(b.time) - parseTime(a.time));
-        if (mountedRef.current) {
+        if (active && mountedRef.current) {
           latestRef.current = sorted;
           setRows(sorted);
-        }
-        const hiddenSetLocal = new Set(hiddenKey ? hiddenKey.split("|") : []);
-        const visible = sorted.filter((row) => !hiddenSetLocal.has(resultKey(row)));
-        const latest = maxTime(visible);
-        if (latest) {
-          const stored = Number(localStorage.getItem(seenKey) ?? "0");
-          if (!stored) {
-            localStorage.setItem(seenKey, String(latest));
-          } else if (latest > stored && mountedRef.current) {
-            setHasNew(true);
-          }
+          updateBell(sorted);
         }
       } catch {
         // Silent: the bell is a hint, errors surface when results are opened.
@@ -117,18 +104,40 @@ export function CourseResults({
         busyRef.current = false;
       }
     };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === seenKey && latestRef.current) updateBell(latestRef.current);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void check();
+    };
     void check();
-    const iv = setInterval(() => void check(), 60000);
-    return () => clearInterval(iv);
+    const iv = setInterval(() => {
+      if (document.visibilityState === "visible") void check();
+    }, 5000);
+    window.addEventListener("focus", check);
+    window.addEventListener("online", check);
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      active = false;
+      clearInterval(iv);
+      window.removeEventListener("focus", check);
+      window.removeEventListener("online", check);
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [modulesKey, hiddenKey, seenKey]);
 
   const markSeen = (list: ResultRow[]) => {
-    const latest = maxTime(list);
-    if (latest) localStorage.setItem(seenKey, String(latest));
+    try {
+      localStorage.setItem(seenKey, JSON.stringify(list.map(resultKey)));
+    } catch {
+      // Storage can be disabled; viewing still clears the current indicator.
+    }
     setHasNew(false);
   };
 
-  const fetchRows = async () => {
+  const fetchRows = async (acknowledge = false) => {
     setBusy(true);
     setError(null);
     try {
@@ -136,6 +145,8 @@ export function CourseResults({
       const sorted = r.sort((a, b) => parseTime(b.time) - parseTime(a.time));
       latestRef.current = sorted;
       setRows(sorted);
+      if (acknowledge) markSeen(sorted);
+      else setHasNew(hasUnseenResults(sorted, readSeenResults(localStorage, seenKey), hidden));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Помилка завантаження");
     } finally {
@@ -149,8 +160,9 @@ export function CourseResults({
     if (next) {
       // Opening the section counts as viewing: the bell is cleared and
       // the seen marker is updated with the freshest data.
-      if (latestRef.current) markSeen(latestRef.current);
-      if (!busy) void fetchRows().then(() => markSeen(latestRef.current ?? []));
+      const cached = latestRef.current;
+      if (cached) markSeen(cached);
+      if (!busy) void fetchRows(cached === null);
     }
   };
 
@@ -181,7 +193,7 @@ export function CourseResults({
       .sort((a, b) => a.name.localeCompare(b.name, "uk-UA"));
   }, [rows, filter, hiddenSet]);
 
-  const visibleCount = groups.reduce((a, g) => a + g.rows.length, 0);
+  const visibleCount = (rows ?? []).filter((row) => !hiddenSet.has(resultKey(row))).length;
   const pick = (k: string) =>
     setPicked((s) => {
       const n = new Set(s);
@@ -217,7 +229,8 @@ export function CourseResults({
           {rows && <span className="text-sm font-normal text-task">({visibleCount})</span>}
           {hasNew && (
             <BellRing
-              className="size-5 animate-bounce text-task"
+              className="size-5 shrink-0 animate-bounce text-task motion-reduce:animate-none"
+              role="img"
               aria-label="З'явилися нові результати тестів"
             />
           )}
