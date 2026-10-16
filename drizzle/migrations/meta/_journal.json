@@ -57,6 +57,13 @@
       "when": 1791466578535,
       "tag": "0007_practical_files",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792136366938,
+      "tag": "0008_enable_site_content_rls",
+      "breakpoints": true
     }
   ]
 }
