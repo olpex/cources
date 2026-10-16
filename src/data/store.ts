@@ -157,7 +157,40 @@ function sameSlides(a: ParsedSlide[] | undefined, b: ParsedSlide[]) {
 }
 
 /** Merge a parsed Google Doc into an existing course (or build a new one), in place. */
-function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string): CourseItem {
+export type SyncScope = "all" | "notes" | "practicals";
+
+function mergeDoc(course: CourseItem | null, doc: ParsedDoc, url: string, scope: SyncScope = "all"): CourseItem {
+  if (course && scope !== "all") {
+    const full = mergeDoc(course, doc, url, "all");
+    const byId = new Map(full.modules.map((m) => [m.id, m]));
+    const practicalKeys = ["practicalTask", "practicalButtonTitle", "practicals"] as const;
+    const modules: ModuleItem[] = [];
+    for (const prev of course.modules) {
+      const next = byId.get(prev.id);
+      byId.delete(prev.id);
+      if (!next) { modules.push(prev); continue; }
+      if (scope === "practicals") {
+        const m: ModuleItem = { ...prev };
+        for (const k of practicalKeys) delete (m as Record<string, unknown>)[k];
+        for (const k of practicalKeys) if (next[k] !== undefined) (m as Record<string, unknown>)[k] = next[k];
+        modules.push(m);
+      } else {
+        const m: ModuleItem = { ...next };
+        for (const k of practicalKeys) delete (m as Record<string, unknown>)[k];
+        for (const k of practicalKeys) if (prev[k] !== undefined) (m as Record<string, unknown>)[k] = prev[k];
+        modules.push(m);
+      }
+    }
+    // New tabs: only a notes refresh adds new modules (without practical tasks).
+    if (scope === "notes") {
+      for (const m of byId.values()) {
+        if (course.modules.some((x) => x.id === m.id)) continue;
+        const { practicalTask: _a, practicalButtonTitle: _b, practicals: _c, ...rest } = m;
+        modules.push(rest as ModuleItem);
+      }
+    }
+    return { ...course, modules };
+  }
   const base: CourseItem = course ?? {
     id: uid(),
     title: doc.title,
@@ -402,7 +435,7 @@ export function useContent(canEdit = false) {
 
   /** Create a course from a Google Doc, or refresh an existing one. */
   const applyDoc = useCallback(
-    (doc: ParsedDoc, url: string, courseId?: string) => {
+    (doc: ParsedDoc, url: string, courseId?: string, scope: SyncScope = "all") => {
       let resultId = courseId ?? "";
       mutate((prev) => {
         const target =
@@ -414,7 +447,7 @@ export function useContent(canEdit = false) {
 
         if (target) {
           resultId = target.id;
-          return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url) : c));
+          return prev.map((c) => (c.id === target.id ? mergeDoc(c, doc, url, scope) : c));
         }
         const created = mergeDoc(null, doc, url);
         resultId = created.id;
