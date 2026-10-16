@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import {
   BookOpen,
   Bold,
+  ChevronDown,
   ClipboardCheck,
   ListChecks,
   ExternalLink,
@@ -45,6 +46,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
 import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocViewer";
@@ -125,7 +132,7 @@ export function CoursesLanding() {
           ? "Нотатки до слайдів оновлено, практичні роботи не змінено"
           : scope === "practicals"
             ? "Практичні роботи оновлено, нотатки не змінено"
-            : "Курс оновлено з Google Документа",
+            : "Оновлено все з Google Документа: нотатки та практичні роботи",
       );
     } catch (e) {
       setSyncError({
@@ -445,39 +452,63 @@ export function CoursesLanding() {
                     )}
                     {allModulesClosed ? "Відкрити модулі" : "Закрити модулі"}
                   </Button>
-                  <Button
-                    size="sm"
-                    onClick={() =>
-                      course.sourceDocUrl
-                        ? void syncCourse(course)
-                        : setImportDialog({ course })
-                    }
-                    disabled={syncingId === course.id}
-                    title={
-                      course.sourceDocUrl
-                        ? "Оновити дані з прив’язаного Google Документа"
-                        : "Спочатку прив’яжіть Google Документ"
-                    }
-                  >
-                    {syncingId === course.id ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="size-4" />
+                  <div role="group" className="flex items-stretch">
+                    <Button
+                      size="sm"
+                      className="rounded-r-none"
+                      onClick={() =>
+                        course.sourceDocUrl
+                          ? void syncCourse(course)
+                          : setImportDialog({ course })
+                      }
+                      disabled={syncingId === course.id}
+                      title={
+                        course.sourceDocUrl
+                          ? "Оновити з Google Документа все: нотатки до слайдів і тексти практичних робіт"
+                          : "Спочатку прив’яжіть Google Документ"
+                      }
+                    >
+                      {syncingId === course.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="size-4" />
+                      )}
+                      {course.sourceDocUrl ? "Оновити все" : "Оновити"}
+                    </Button>
+                    {course.sourceDocUrl && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="sm"
+                            aria-label="Вибрати, що саме оновити"
+                            title="Вибрати, що саме оновити: лише нотатки чи лише практичні роботи"
+                            disabled={syncingId === course.id}
+                            className="rounded-l-none border-l border-l-primary-foreground/30 px-2"
+                          >
+                            <ChevronDown className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            disabled={syncingId === course.id}
+                            onClick={() => void syncCourse(course, "notes")}
+                            title="Оновити лише нотатки до слайдів; тексти практичних робіт залишаться без змін"
+                          >
+                            <RefreshCw className="size-4" />
+                            Лише нотатки
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            disabled={syncingId === course.id}
+                            onClick={() => void syncCourse(course, "practicals")}
+                            title="Оновити лише тексти практичних робіт; нотатки до слайдів залишаться без змін"
+                          >
+                            <RefreshCw className="size-4" />
+                            Лише практичні
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                    Оновити
-                  </Button>
-                  {course.sourceDocUrl && (
-                    <>
-                      <Button size="sm" variant="outline" disabled={syncingId === course.id} onClick={() => void syncCourse(course, "notes")} title="Оновити лише нотатки до слайдів; тексти практичних робіт залишаться без змін">
-                        <RefreshCw className="size-4" />
-                        Лише нотатки
-                      </Button>
-                      <Button size="sm" variant="outline" disabled={syncingId === course.id} onClick={() => void syncCourse(course, "practicals")} title="Оновити лише тексти практичних робіт; нотатки до слайдів залишаться без змін">
-                        <RefreshCw className="size-4" />
-                        Лише практичні
-                      </Button>
-                    </>
-                  )}
+                  </div>
 
                   <Button size="sm" variant="outline" onClick={() => setImportDialog({ course })}>
                     <Link2 className="size-4" />

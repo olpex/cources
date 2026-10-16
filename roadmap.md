@@ -8,3 +8,4 @@
 - [x] Show student-specific awaiting-grading badges and pending works; verified live teacher display and student 2 → 1 → hidden updates with test responses.
 - [x] Unify short practical-button topics and consecutive numbering per course; include in structure action; verified all course sequences, original dialog title, confirmation and narrow-screen button fit.
 - [x] Fix test-result bell for localized sheet dates; verified real Mихайло result, new-response polling, unread persistence and acknowledgement in the browser.
+- [x] Merge the three course update buttons into one split button «Оновити все» with a chevron menu for notes-only / practicals-only; verified live in edit mode.
