@@ -18,3 +18,4 @@
 - Derive practical button topics with a shared pure label helper and compute ordinals from course module/task order; store only optional button topics through shared content, never change task titles or submission IDs for presentation.
 - Test-result notifications compare persisted viewed row keys rather than timestamp maxima; poll visible pages and refresh on focus so localized dates and background reads cannot hide new submissions.
 - Share the Sheets result reader between test results and course summaries with a short data-only server cache to avoid duplicate upstream reads; never share pending I/O promises across Worker requests.
+- Google Doc sync supports scopes (all / notes-only / practicals-only) in mergeDoc so teachers can refresh slide notes and practical-task texts independently without overwriting the other.
