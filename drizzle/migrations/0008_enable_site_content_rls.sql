@@ -1,0 +1,1 @@
+ALTER TABLE public.site_content ENABLE ROW LEVEL SECURITY;
