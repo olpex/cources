@@ -221,7 +221,7 @@ function PracticalDialog({ courseId, moduleId, practicalId, title, task, onClose
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Текст, скріншоти, Word, Excel і PDF перевіряються автоматично. Посилання на чати з ШІ-асистентами система спробує відкрити й оцінити сама; якщо не вдасться, а також для музики, відео, аудіо чи Access — роботу оцінить викладач. Посилання мають бути відкриті для всіх.
+              Текст, скріншоти, Word, Excel, PDF і короткі відеофайли (MP4, WebM, MOV до 15 МБ) перевіряються автоматично. Посилання на чати з ШІ-асистентами система спробує відкрити й оцінити сама; якщо не вдасться, а також для аудіо, посилань на музику чи відео й Access — роботу оцінить викладач. Посилання мають бути відкриті для всіх.
             </p>
             {receipt && (
               <div ref={receiptRef} role="status" aria-live="polite" className="flex items-start gap-3 rounded-lg border border-task bg-secondary p-4 text-sm">
