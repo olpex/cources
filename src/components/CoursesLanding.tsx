@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import {
   BookOpen,
   Bold,
+  ChevronDown,
   ClipboardCheck,
   ListChecks,
   ExternalLink,
@@ -45,6 +46,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
 import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocViewer";
