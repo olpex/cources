@@ -3,7 +3,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sendGmail } from "@/lib/forum.functions";
 
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const NVIDIA_MODEL = "meta/llama-3.2-90b-vision-instruct";
+const NVIDIA_MODEL = "nvidia/nemotron-3.5-super-vl-120b-a12b";
+const MAX_IMAGE = 4 * 1024 * 1024;
+const MAX_VIDEO = 15 * 1024 * 1024;
 const BUCKET = "practical-files";
 
 export type PracticalFile = { path: string; name: string; type: string; size: number };
@@ -23,10 +25,11 @@ type Slide = { title: string; blocks: { text: string }[] };
 const fileKind = (f: PracticalFile) => {
   const n = f.name.toLowerCase();
   if (f.type.startsWith("image/")) return "image";
+  if (f.type.startsWith("video/") && /\.(mp4|webm|mov)$/.test(n)) return "video";
   if (n.endsWith(".docx")) return "docx";
   if (n.endsWith(".xlsx")) return "xlsx";
   if (n.endsWith(".pdf") || f.type === "application/pdf") return "pdf";
-  return "manual"; // audio, video, Access, old .doc/.xls — teacher checks by hand
+  return "manual"; // audio, other video formats, Access, old .doc/.xls — teacher checks by hand
 };
 
 async function pdfText(bytes: Uint8Array): Promise<string> {
@@ -230,7 +233,7 @@ export const submitPractical = createServerFn({ method: "POST" })
 
     const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 
-    const reasons: string[] = data.files.filter((f) => fileKind(f) === "manual").map((f) => `файл «${f.name}» (аудіо / відео / Access / старий формат)`);
+    const reasons: string[] = data.files.filter((f) => fileKind(f) === "manual").map((f) => `файл «${f.name}» (аудіо / Access / старий формат)`);
 
     // Links: try to read each one; media or unreadable pages go to the teacher.
     let docsText = "";
@@ -240,17 +243,20 @@ export const submitPractical = createServerFn({ method: "POST" })
       else reasons.push(`посилання ${r.url}: ${r.reason}`);
     }
 
-    // Files the AI can read: Word/Excel/PDF text and the first image.
-    let image: string | null = null;
+    // Files the AI can read: Word/Excel/PDF text, images and short videos.
+    const media: { type: "image_url" | "video_url"; url: string }[] = [];
     if (!reasons.length) for (const f of data.files) {
       const kind = fileKind(f);
-      if (kind === "image" && image) continue;
       try {
         const { data: blob } = await admin.storage.from(BUCKET).download(f.path);
         if (!blob) continue;
         const bytes = new Uint8Array(await blob.arrayBuffer());
         if (kind === "image") {
-          if (bytes.length <= 4 * 1024 * 1024) image = `data:${f.type};base64,${toBase64(bytes)}`;
+          if (bytes.length <= MAX_IMAGE) media.push({ type: "image_url", url: `data:${f.type};base64,${toBase64(bytes)}` });
+          else reasons.push(`файл «${f.name}»: зображення більше 4 МБ`);
+        } else if (kind === "video") {
+          if (bytes.length <= MAX_VIDEO) media.push({ type: "video_url", url: `data:${f.type};base64,${toBase64(bytes)}` });
+          else reasons.push(`файл «${f.name}»: відео більше 15 МБ`);
         } else if (kind === "docx" || kind === "xlsx") {
           docsText += `\n\n--- Файл «${f.name}» ---\n${(await officeText(bytes, kind)).slice(0, 15000)}`;
         } else if (kind === "pdf") {
@@ -265,6 +271,7 @@ export const submitPractical = createServerFn({ method: "POST" })
     }
 
     if (reasons.length) {
+      media.length = 0;
       await admin.from("practical_submissions").update({ status: "manual" }).eq("id", row.id);
       await notifyTeacher(name, email, course.title, taskTitle, `Потрібна ваша перевірка. ШІ не зміг оцінити:\n- ${reasons.join("\n- ")}`);
       return { score: null, manual: true, feedback: "Роботу отримано. Викладач перегляне посилання й файли та виставить оцінку." };
@@ -287,7 +294,7 @@ ${notes || "(немає)"}
 
 ВІДПОВІДЬ СТУДЕНТА:
 ${data.answer || "(текст відсутній)"}${docsText.slice(0, 30000)}
-${image ? "\nСтудент також додав зображення (див. нижче)." : ""}`;
+${media.length ? "\nСтудент також додав зображення або відео (див. нижче) — оціни і їх." : ""}`;
 
     const key = process.env["NVIDIA_API_KEY"];
     let score: number | null = null;
@@ -302,15 +309,15 @@ ${image ? "\nСтудент також додав зображення (див. 
             messages: [
               {
                 role: "user",
-                content: image
+                content: media.length
                   ? [
                       { type: "text", text: prompt },
-                      { type: "image_url", image_url: { url: image } },
+                      ...media.map((m) => (m.type === "image_url" ? { type: m.type, image_url: { url: m.url } } : { type: m.type, video_url: { url: m.url } })),
                     ]
                   : prompt,
               },
             ],
-            max_tokens: 800,
+            max_tokens: 6000,
             temperature: 0.2,
           }),
         });
