@@ -414,7 +414,25 @@ export function CoursesLanding() {
                 <Badge variant="secondary" className="mb-3 font-medium">
                   Курс {index + 1}
                 </Badge>
-                <h2 className="text-3xl font-semibold sm:text-4xl">{course.title}</h2>
+                <h2 className="text-3xl font-semibold sm:text-4xl">
+                  {course.title}
+                  {course.expectationsUrl && (course.expectationsVisible || edit) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={`ml-3 align-middle border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive ${!course.expectationsVisible ? "opacity-50" : ""}`}
+                      title={course.expectationsVisible ? undefined : "Приховано від студентів"}
+                      onClick={() =>
+                        setDocView({
+                          title: `Синхронізація очікувань — ${course.title}`,
+                          url: toReadOnlyDocUrl(course.expectationsUrl!),
+                        })
+                      }
+                    >
+                      Синхронізація очікувань
+                    </Button>
+                  )}
+                </h2>
                 {course.subtitle && (
                   <p className="mt-2 text-lg text-primary/80">{course.subtitle}</p>
                 )}
