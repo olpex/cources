@@ -17,7 +17,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   course?: CourseItem | null;
-  onSave: (data: { title: string; subtitle: string; description: string; viberUrl: string; knowledgeBaseUrl: string }) => void;
+  onSave: (data: { title: string; subtitle: string; description: string; viberUrl: string; knowledgeBaseUrl: string; expectationsUrl: string; expectationsVisible: boolean }) => void;
 };
 
 export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
@@ -26,6 +26,8 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
   const [description, setDescription] = useState("");
   const [viberUrl, setViberUrl] = useState("");
   const [knowledgeBaseUrl, setKnowledgeBaseUrl] = useState("");
+  const [expectationsUrl, setExpectationsUrl] = useState("");
+  const [expectationsVisible, setExpectationsVisible] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -34,6 +36,8 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
     setDescription(course?.description ?? "");
     setViberUrl(course?.viberUrl ?? "");
     setKnowledgeBaseUrl(course?.knowledgeBaseUrl ?? "");
+    setExpectationsUrl(course?.expectationsUrl ?? "");
+    setExpectationsVisible(course?.expectationsVisible ?? false);
   }, [open, course]);
 
   const validLink = (value: string) => {
@@ -45,7 +49,7 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
       return false;
     }
   };
-  const valid = title.trim().length > 0 && title.trim().length <= 120 && validLink(viberUrl) && validLink(knowledgeBaseUrl);
+  const valid = title.trim().length > 0 && title.trim().length <= 120 && validLink(viberUrl) && validLink(knowledgeBaseUrl) && validLink(expectationsUrl);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,6 +103,16 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
             <Input id="c-knowledge" type="url" value={knowledgeBaseUrl} onChange={(e) => setKnowledgeBaseUrl(e.target.value)} placeholder="https://invite.viber.com/…" aria-invalid={!validLink(knowledgeBaseUrl)} />
             {!validLink(knowledgeBaseUrl) && <p className="text-sm text-destructive">Введіть повне посилання, що починається з https://</p>}
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="c-expect">PDF «Синхронізація очікувань» (посилання з Google Диску)</Label>
+            <Input id="c-expect" type="url" value={expectationsUrl} onChange={(e) => setExpectationsUrl(e.target.value)} placeholder="https://drive.google.com/file/d/…" aria-invalid={!validLink(expectationsUrl)} />
+            {!validLink(expectationsUrl) && <p className="text-sm text-destructive">Введіть повне посилання, що починається з https://</p>}
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={expectationsVisible} onChange={(e) => setExpectationsVisible(e.target.checked)} className="size-4 accent-primary" />
+              Показувати кнопку студентам
+            </label>
+            <p className="text-xs text-muted-foreground">Відкрийте доступ до файлу «Усі, хто має посилання».</p>
+          </div>
         </div>
 
         <DialogFooter>
@@ -114,6 +128,8 @@ export function CourseDialog({ open, onOpenChange, course, onSave }: Props) {
                 description: description.trim(),
                 viberUrl: viberUrl.trim(),
                 knowledgeBaseUrl: knowledgeBaseUrl.trim(),
+                expectationsUrl: expectationsUrl.trim(),
+                expectationsVisible,
               });
               onOpenChange(false);
             }}

@@ -54,6 +54,10 @@ export type CourseItem = {
   viberUrl?: string;
   /** Separate Viber community containing course knowledge-base materials. */
   knowledgeBaseUrl?: string;
+  /** Google Drive PDF "Синхронізація очікувань" */
+  expectationsUrl?: string;
+  /** whether students see the expectations button */
+  expectationsVisible?: boolean;
   /** YouTube recordings, sorted by publish date */
   videos?: VideoItem[];
   /** test results removed by the admin (keys from resultKey) */
