@@ -28,34 +28,58 @@ export function ExternalCourses({ courses, edit, onChange }: Props) {
   if (!showExternalCourses(courses, edit)) return null;
 
   return (
-    <section aria-label="Курси українською" className="mb-4 border-y border-border py-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button variant="ghost" className="h-auto min-w-0 flex-1 justify-between whitespace-normal px-2 py-2 text-left" aria-expanded={expanded} aria-controls={`${id}-list`} onClick={() => setExpanded((value) => !value)}>
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-secondary"><GraduationCap className="size-5 text-primary" /></span>
-            <span className="min-w-0">
-              <span className="block font-semibold">Курси українською <span className="text-muted-foreground">({courses.length})</span></span>
-              <span className="block text-sm font-normal text-muted-foreground">Україномовні курси інших освітніх платформ для поглиблення знань із цієї теми.</span>
+    <section aria-label="Курси українською" className="mb-4 rounded-2xl border border-border bg-card shadow-soft">
+      <button
+        type="button"
+        onClick={() => setExpanded((value) => !value)}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+        aria-expanded={expanded}
+        aria-controls={`${id}-list`}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
+            <GraduationCap className="size-5 text-primary" />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-semibold">
+              Курси українською <span className="text-muted-foreground">({courses.length})</span>
+            </span>
+            <span className="block text-sm text-muted-foreground">
+              Україномовні курси інших освітніх платформ для поглиблення знань із цієї теми.
             </span>
           </span>
-          <ChevronDown className={`shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
-        </Button>
-        {edit && <Button size="sm" variant="outline" onClick={() => { setTitle(""); setUrl(""); setDescription(""); setAdding(true); }}><Plus />Додати сторонній курс</Button>}
-      </div>
+        </span>
+        <ChevronDown className={`size-5 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
+
       {expanded && (
-        <ul id={`${id}-list`} className="mt-2 divide-y divide-border">
-          {courses.map((course) => {
-            const href = externalCourseUrl(course.url);
-            return <li key={course.id} className="flex items-start gap-3 px-2 py-4">
-              <div className="min-w-0 flex-1">
-                {href ? <Button asChild variant="link" className="h-auto max-w-full justify-start whitespace-normal p-0 text-left"><a href={href} target="_blank" rel="noopener noreferrer"><span className="break-words">{course.title}</span><ExternalLink /></a></Button> : <p className="font-medium">{course.title}</p>}
-                <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{course.description}</p>
-              </div>
-              {edit && <Button variant="ghost" size="icon" aria-label={`Видалити сторонній курс «${course.title}»`} title="Видалити сторонній курс" onClick={() => setRemoving(course)}><Trash2 className="text-destructive" /></Button>}
-            </li>;
-          })}
-        </ul>
+        <div className="border-t border-border px-3 py-2">
+          {courses.length === 0 && (
+            <p className="px-2 py-3 text-sm text-muted-foreground">Сторонні курси ще не додано.</p>
+          )}
+          <ul id={`${id}-list`} className="max-h-96 divide-y divide-border overflow-y-auto">
+            {courses.map((course) => {
+              const href = externalCourseUrl(course.url);
+              return (
+                <li key={course.id} className="flex items-start gap-3 rounded-lg px-2 py-3 hover:bg-secondary">
+                  <div className="min-w-0 flex-1">
+                    {href ? <Button asChild variant="link" className="h-auto max-w-full justify-start whitespace-normal p-0 text-left"><a href={href} target="_blank" rel="noopener noreferrer"><span className="break-words">{course.title}</span><ExternalLink /></a></Button> : <p className="font-medium">{course.title}</p>}
+                    <p className="mt-1 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground">{course.description}</p>
+                  </div>
+                  {edit && <Button variant="ghost" size="icon" aria-label={`Видалити сторонній курс «${course.title}»`} title="Видалити сторонній курс" onClick={() => setRemoving(course)}><Trash2 className="text-destructive" /></Button>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
+
+      {edit && (
+        <div className="border-t border-border px-5 py-3">
+          <Button size="sm" variant="outline" onClick={() => { setTitle(""); setUrl(""); setDescription(""); setAdding(true); }}><Plus />Додати сторонній курс</Button>
+        </div>
+      )}
+
       <Dialog open={adding && edit} onOpenChange={setAdding}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>Додати сторонній курс</DialogTitle></DialogHeader>
