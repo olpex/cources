@@ -39,6 +39,8 @@ export type ModuleItem = {
 
 export type MaterialItem = { id: string; title: string; url: string };
 
+export type ExternalCourseItem = { id: string; title: string; url: string; description: string };
+
 export type CourseItem = {
   id: string;
   title: string;
@@ -60,6 +62,8 @@ export type CourseItem = {
   expectationsVisible?: boolean;
   /** YouTube recordings, sorted by publish date */
   videos?: VideoItem[];
+  /** Ukrainian-language courses on external learning platforms. */
+  externalCourses?: ExternalCourseItem[];
   /** test results removed by the admin (keys from resultKey) */
   hiddenResults?: string[];
 };
