@@ -63,6 +63,7 @@ import { GmailIcon } from "@/components/GmailIcon";
 import { YoutubeIcon } from "@/components/YoutubeIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
+import { ExternalCourses } from "@/components/ExternalCourses";
 import { CourseResults } from "@/components/CourseResults";
 import { PracticalButton, PracticalResults } from "@/components/PracticalWork";
 import { ModuleMaterials } from "@/components/ModuleMaterials";
@@ -654,6 +655,14 @@ export function CoursesLanding() {
                 videos={course.videos ?? []}
                 edit={edit}
                 onChange={(videos) => updateCourse(course.id, { videos })}
+              />
+            )}
+
+            {!courseLocked && (
+              <ExternalCourses
+                courses={course.externalCourses ?? []}
+                edit={edit}
+                onChange={(externalCourses) => updateCourse(course.id, { externalCourses })}
               />
             )}
 
