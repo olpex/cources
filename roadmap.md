@@ -1,5 +1,5 @@
 - [x] Move forum access before Viber in every course; preserve header feedback.
-- [ ] Add per-course Ukrainian external-course recommendations with teacher editing and verify add/read/delete persistence.
+- [x] Add per-course Ukrainian external-course recommendations with teacher editing; verified persisted add/read/delete, empty-section hiding and mobile display.
 - [x] Add a red forum mention and halve the requested section gaps.
 - [x] Verify course section order, links and spacing in the preview.
 - [x] Shorten practical grading wording and automatically emphasize task titles and section labels.
