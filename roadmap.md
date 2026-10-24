@@ -1,4 +1,5 @@
-- [ ] Add course assistant buttons, session chat, course switching, sources, errors and mobile dialog; verify the existing service.
+- [x] Add assistant buttons to all three courses, session chat, switching, sources, errors and full-screen mobile dialog; verified real answers with the service's allowed origin and nine passing tests.
+- [ ] Enable unmodified preview chat: external service currently allows cources.lovable.app but omits CORS permission for the preview domain; requires the external service owner to allow that origin.
 - [x] Move forum access before Viber in every course; preserve header feedback.
 - [x] Add per-course Ukrainian external-course recommendations with teacher editing; verified persisted add/read/delete, empty-section hiding and mobile display.
 - [x] Add a red forum mention and halve the requested section gaps.
