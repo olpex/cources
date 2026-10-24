@@ -265,36 +265,31 @@ export function CoursesLanding() {
           </h1>
           <div className="mt-6 space-y-3 text-base leading-tight text-muted-foreground">
             <p>
-              Перехід до курсу відбувається за допомогою кнопок у «шапці» проєкту. Кожен курс
-              містить <span className="font-medium text-destructive">посилання на Viber-спільноту</span><sup className="font-bold text-destructive">*</sup>,
-              до якої ви можете долучатися і надсилати свої запитання, а також посилання на
-              окрему Viber-спільноту <span className="font-medium text-destructive">«База знань»</span>,
-              у якій викладач розміщує додаткові матеріали,
-              що згадуються під час навчання.
-              {" "}На початку кожного курсу є <span className="font-medium text-destructive">форум</span> для запитань, обговорень і повідомлень викладача.
+              Перехід до курсу — кнопки у «шапці». Кожен курс має{" "}
+              <span className="font-medium text-destructive">Viber-спільноту</span><sup className="font-bold text-destructive">*</sup>{" "}
+              для запитань, спільноту <span className="font-medium text-destructive">«База знань»</span> із
+              додатковими матеріалами та <span className="font-medium text-destructive">форум</span> для
+              запитань, обговорень і повідомлень викладача.
             </p>
             <p>
-              Крім того, у верхній частині сторінки є{" "}
-              <span className="font-medium text-destructive">посилання на відеозаписи занять</span>, а
-              також <span className="font-medium text-destructive">результати тестів</span>, які
-              оновлюються одразу після їх проходження.
+              Угорі сторінки курсу — <span className="font-medium text-destructive">записи занять на YouTube</span>,{" "}
+              <span className="font-medium text-destructive">результати тестів</span> (оновлюються одразу після
+              проходження) і секція <span className="font-medium text-destructive">«Курси українською»</span> з
+              посиланнями й описами інших україномовних курсів на цю тематику.
             </p>
             <p>
-              Картки всередині є запланованими для опрацювання заняттями. До кожного з них додано{" "}
-              <span className="font-medium text-destructive">презентацію, конспект, додаткові матеріали, а також тест для самоперевірки</span>{" "}
-              та{" "}
-              <span className="font-medium text-destructive">тест для оцінювання</span><sup className="font-bold text-destructive">**</sup>.
+              Кожне заняття — картка з{" "}
+              <span className="font-medium text-destructive">презентацією, конспектом, додатковими матеріалами, тестом для самоперевірки</span>{" "}
+              та <span className="font-medium text-destructive">тестом для оцінювання</span><sup className="font-bold text-destructive">**</sup>.
             </p>
             <p>
-              Крім тестів, у модулях є <span className="font-medium text-destructive">практичні роботи</span> — кнопки з назвою
-              конкретної роботи. Натисніть кнопку, прочитайте завдання й надішліть свою відповідь: текстом,
-              файлом або посиланням на чат із нейромережею. Роботу оцінює викладач (частково — автоматично),
-              а бал і пояснення ви отримаєте на електронну пошту та в секції «Результати практичних робіт» на сторінці курсу.
+              <span className="font-medium text-destructive">Практичні роботи</span> — кнопки з назвою роботи:
+              відповідь текстом, файлом або посиланням на чат із нейромережею; бал і пояснення надходять на
+              пошту та в «Результати практичних робіт».
             </p>
             <p>
-              Після проходження навчання на курсі ви маєте змогу{" "}
-              <span className="font-medium text-destructive">залишити відгук</span> щодо навчання,
-              натиснувши кнопку у секції у «шапці проєкту».
+              Наприкінці курсу можна <span className="font-medium text-destructive">залишити відгук</span> —
+              кнопка у «шапці» проєкту.
             </p>
             <div className="space-y-0.5 pt-1 text-sm font-bold italic leading-snug text-muted-foreground">
               <p>
