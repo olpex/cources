@@ -64,6 +64,8 @@ import { YoutubeIcon } from "@/components/YoutubeIcon";
 import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { ExternalCourses } from "@/components/ExternalCourses";
+import { CourseAssistant } from "@/components/CourseAssistant";
+import { assistantCourseKey } from "@/lib/course-assistant";
 import { CourseResults } from "@/components/CourseResults";
 import { PracticalButton, PracticalResults } from "@/components/PracticalWork";
 import { ModuleMaterials } from "@/components/ModuleMaterials";
@@ -388,6 +390,7 @@ export function CoursesLanding() {
         {courses.map((course, index) => {
         const courseOff = course.active === false;
         const courseLocked = courseOff && !admin;
+        const assistantKey = assistantCourseKey(course.id, course.title);
         const allModulesClosed = course.modules.every((m) => m.active === false);
         const practicalNumbers = new Map<string, number>();
         for (const module of course.modules) {
@@ -431,6 +434,11 @@ export function CoursesLanding() {
                 </h2>
                 {course.subtitle && (
                   <p className="mt-2 text-lg text-primary/80">{course.subtitle}</p>
+                )}
+                {!courseLocked && assistantKey && (
+                  <div className="mt-3">
+                    <CourseAssistant courseKey={assistantKey} courseTitle={course.title} />
+                  </div>
                 )}
               </div>
               {edit && (
