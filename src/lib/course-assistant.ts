@@ -21,8 +21,8 @@ async function request(path: string, init: RequestInit, signal: AbortSignal): Pr
   try {
     const response = await fetch(`${ASSISTANT_URL}${path}`, { ...init, signal: controller.signal, credentials: "omit" });
     const data = await response.json() as Record<string, unknown>;
-    if (!response.ok || data.ok !== true) {
-      throw new Error(typeof data.error === "string" ? data.error : "Помічник тимчасово недоступний. Спробуйте ще раз.");
+    if (!response.ok || data['ok'] !== true) {
+      throw new Error(typeof data['error'] === "string" ? data['error'] : "Помічник тимчасово недоступний. Спробуйте ще раз.");
     }
     return data;
   } catch (error) {
@@ -38,8 +38,8 @@ async function request(path: string, init: RequestInit, signal: AbortSignal): Pr
 
 export async function getAssistantCourses(signal: AbortSignal): Promise<AssistantCourse[]> {
   const data = await request("/courses", {}, signal);
-  if (!Array.isArray(data.courses)) throw new Error("Не вдалося отримати список курсів.");
-  const courses = data.courses.filter((course): course is AssistantCourse =>
+  if (!Array.isArray(data['courses'])) throw new Error("Не вдалося отримати список курсів.");
+  const courses = data['courses'].filter((course): course is AssistantCourse =>
     typeof course?.key === "string" && typeof course?.name === "string");
   if (!courses.length) throw new Error("Помічник ще налаштовується: список курсів порожній.");
   return courses;
@@ -51,6 +51,6 @@ export async function askAssistant(course: string, question: string, signal: Abo
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ course, question: question.trim() }),
   }, signal);
-  if (typeof data.answer !== "string") throw new Error("Помічник не повернув відповідь. Спробуйте ще раз.");
-  return { answer: data.answer, sources: Array.isArray(data.sources) ? data.sources.filter((s): s is string => typeof s === "string") : [] };
+  if (typeof data['answer'] !== "string") throw new Error("Помічник не повернув відповідь. Спробуйте ще раз.");
+  return { answer: data['answer'], sources: Array.isArray(data['sources']) ? data['sources'].filter((s): s is string => typeof s === "string") : [] };
 }
