@@ -280,6 +280,10 @@ export function CoursesLanding() {
               посиланнями й описами інших україномовних курсів на цю тематику.
             </p>
             <p>
+              На сторінці курсу є <span className="font-medium text-destructive">асистент</span> — він відповідає на
+              запитання лише за матеріалами модулів цього курсу.
+            </p>
+            <p>
               Кожне заняття — картка з{" "}
               <span className="font-medium text-destructive">презентацією, конспектом, додатковими матеріалами, тестом для самоперевірки</span>{" "}
               та <span className="font-medium text-destructive">тестом для оцінювання</span><sup className="font-bold text-destructive">**</sup>.
