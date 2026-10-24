@@ -20,3 +20,4 @@
 - Test-result notifications compare persisted viewed row keys rather than timestamp maxima; poll visible pages and refresh on focus so localized dates and background reads cannot hide new submissions.
 - Share the Sheets result reader between test results and course summaries with a short data-only server cache to avoid duplicate upstream reads; never share pending I/O promises across Worker requests.
 - Google Doc sync supports scopes (all / notes-only / practicals-only) in mergeDoc so teachers can refresh slide notes and practical-task texts independently without overwriting the other.
+- Keep the course assistant in a shared per-course dialog with browser-only requests to the existing external service, explicit course-key mapping and abortable requests; this preserves course context and session history without introducing backend infrastructure or stale cross-course answers.
