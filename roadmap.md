@@ -1,3 +1,4 @@
+- [ ] Add course assistant buttons, session chat, course switching, sources, errors and mobile dialog; verify the existing service.
 - [x] Move forum access before Viber in every course; preserve header feedback.
 - [x] Add per-course Ukrainian external-course recommendations with teacher editing; verified persisted add/read/delete, empty-section hiding and mobile display.
 - [x] Add a red forum mention and halve the requested section gaps.
