@@ -52,9 +52,9 @@ async function submit(options: { answer?: string; document?: string; links?: str
 test("empty answer plus full DOCX reaches grading without an absent-work marker", async () => {
   const { result, requests } = await submit({});
   assert.equal(result.score, 12);
-  assert.ok(String(requests[0].messages[0].content).includes(fullText.trim()));
-  assert.equal(String(requests[0].messages[0].content).includes("(текст відсутній)"), false);
-  assert.equal(requests[0].temperature, 0);
+  assert.ok(String(requests[0]?.messages[0]?.content).includes(fullText.trim()));
+  assert.equal(String(requests[0]?.messages[0]?.content).includes("(текст відсутній)"), false);
+  assert.equal(requests[0]?.temperature, 0);
 });
 
 test("unreadable link never skips a readable DOCX and is appended to saved feedback", async () => {
@@ -62,8 +62,8 @@ test("unreadable link never skips a readable DOCX and is appended to saved feedb
   assert.deepEqual(downloads, ["user/answer.docx"]);
   assert.equal(result.manual, false);
   assert.match(result.feedback, /Не вдалося прочитати автоматично: посилання/);
-  assert.equal(updates[0].status, "graded");
-  assert.equal(updates[0].feedback, result.feedback);
+  assert.equal(updates[0]?.["status"], "graded");
+  assert.equal(updates[0]?.["feedback"], result.feedback);
   assert.equal(emails.length, 2);
 });
 
@@ -71,7 +71,7 @@ test("unreadable-only submission goes to manual review without NVIDIA", async ()
   const { result, requests, updates, emails } = await submit({ missing: true });
   assert.equal(result.manual, true);
   assert.equal(requests.length, 0);
-  assert.equal(updates[0].status, "manual");
+  assert.equal(updates[0]?.["status"], "manual");
   assert.equal(emails.length, 1);
 });
 
@@ -85,18 +85,18 @@ test("answer text is graded even with unsupported audio", async () => {
 test("media-only submission uses the media marker and is graded", async () => {
   const { result, requests } = await submit({ media: true });
   assert.equal(result.manual, false);
-  const content = requests[0].messages[0].content;
+  const content = requests[0]?.messages[0]?.content;
   assert.ok(Array.isArray(content));
-  assert.match(content[0].text ?? "", /див\. зображення\/відео нижче/);
-  assert.equal(content[1].type, "image_url");
+  assert.match(content[0]?.text ?? "", /див\. зображення\/відео нижче/);
+  assert.equal(content[1]?.type, "image_url");
 });
 
 test("score 3 with exactly 1500 readable characters retries once and uses second score", async () => {
   const { result, requests } = await submit({ audio: true, answer: "а".repeat(1500), scores: [3, 2] });
   assert.equal(requests.length, 2);
   assert.equal(result.score, 2);
-  assert.match(String(requests[1].messages[0].content), /Оціни саме цей зміст за критеріями/);
-  assert.equal(requests[1].temperature, 0);
+  assert.match(String(requests[1]?.messages[0]?.content), /Оціни саме цей зміст за критеріями/);
+  assert.equal(requests[1]?.temperature, 0);
 });
 
 test("score 3 below 1500 readable characters does not retry", async () => {
@@ -120,5 +120,5 @@ test("failed retry never saves the suspected false minimum", async () => {
   const { result, updates } = await submit({ scores: [1], failRetry: true });
   assert.equal(result.manual, true);
   assert.equal(result.score, null);
-  assert.equal(updates[0].status, "manual");
+  assert.equal(updates[0]?.["status"], "manual");
 });
