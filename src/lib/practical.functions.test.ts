@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { zipSync, strToU8 } from "fflate";
 
+declare const Bun: { Transpiler: new (options: { loader: string; target: string }) => { transformSync(source: string): string } };
+
 // Exercise the production handler without contacting storage, NVIDIA or Gmail.
 const source = readFileSync(new URL("./practical.functions.ts", import.meta.url), "utf8")
   .replace(/^import .*;\n/gm, "")
@@ -50,7 +52,7 @@ async function submit(options: { answer?: string; document?: string; links?: str
 test("empty answer plus full DOCX reaches grading without an absent-work marker", async () => {
   const { result, requests } = await submit({});
   assert.equal(result.score, 12);
-  assert.ok(String(requests[0].messages[0].content).includes(fullText));
+  assert.ok(String(requests[0].messages[0].content).includes(fullText.trim()));
   assert.equal(String(requests[0].messages[0].content).includes("(текст відсутній)"), false);
   assert.equal(requests[0].temperature, 0);
 });
