@@ -233,47 +233,53 @@ export const submitPractical = createServerFn({ method: "POST" })
 
     const admin = (await import("@/integrations/supabase/client.server")).supabaseAdmin;
 
-    const reasons: string[] = data.files.filter((f) => fileKind(f) === "manual").map((f) => `файл «${f.name}» (аудіо / Access / старий формат)`);
+    const unreadable: string[] = data.files.filter((f) => fileKind(f) === "manual").map((f) => `файл «${f.name}» (аудіо / Access / старий формат)`);
 
     // Links: try to read each one; media or unreadable pages go to the teacher.
     let docsText = "";
     const urls = [...new Set(data.links.split(/\s+/).map((s) => s.trim()).filter(Boolean))].slice(0, 5);
     for (const r of await Promise.all(urls.map(readLink))) {
       if (r.kind === "text") docsText += `\n\n--- Вміст за посиланням ${r.url} ---\n${r.text.slice(0, 12000)}`;
-      else reasons.push(`посилання ${r.url}: ${r.reason}`);
+      else unreadable.push(`посилання ${r.url}: ${r.reason}`);
     }
 
     // Files the AI can read: Word/Excel/PDF text, images and short videos.
     const media: { type: "image_url" | "video_url"; url: string }[] = [];
-    if (!reasons.length) for (const f of data.files) {
+    for (const f of data.files) {
       const kind = fileKind(f);
+      if (kind === "manual") continue;
       try {
         const { data: blob } = await admin.storage.from(BUCKET).download(f.path);
-        if (!blob) continue;
+        if (!blob) {
+          unreadable.push(`файл «${f.name}»: не вдалося завантажити`);
+          continue;
+        }
         const bytes = new Uint8Array(await blob.arrayBuffer());
         if (kind === "image") {
           if (bytes.length <= MAX_IMAGE) media.push({ type: "image_url", url: `data:${f.type};base64,${toBase64(bytes)}` });
-          else reasons.push(`файл «${f.name}»: зображення більше 4 МБ`);
+          else unreadable.push(`файл «${f.name}»: зображення більше 4 МБ`);
         } else if (kind === "video") {
           if (bytes.length <= MAX_VIDEO) media.push({ type: "video_url", url: `data:${f.type};base64,${toBase64(bytes)}` });
-          else reasons.push(`файл «${f.name}»: відео більше 15 МБ`);
+          else unreadable.push(`файл «${f.name}»: відео більше 15 МБ`);
         } else if (kind === "docx" || kind === "xlsx") {
-          docsText += `\n\n--- Файл «${f.name}» ---\n${(await officeText(bytes, kind)).slice(0, 15000)}`;
+          const t = (await officeText(bytes, kind)).trim();
+          if (!t) unreadable.push(`файл «${f.name}»: немає читабельного тексту`);
+          else docsText += `\n\n--- Файл «${f.name}» ---\n${t.slice(0, 15000)}`;
         } else if (kind === "pdf") {
           const t = await pdfText(bytes);
-          if (t.length < 50) reasons.push(`файл «${f.name}»: PDF без тексту (скан або зображення)`);
+          if (t.length < 50) unreadable.push(`файл «${f.name}»: PDF без тексту (скан або зображення)`);
           else docsText += `\n\n--- Файл «${f.name}» ---\n${t.slice(0, 15000)}`;
         }
       } catch (e) {
         console.error("file read failed", f.name, e);
-        reasons.push(`файл «${f.name}»: не вдалося прочитати`);
+        unreadable.push(`файл «${f.name}»: не вдалося прочитати`);
       }
     }
 
-    if (reasons.length) {
-      media.length = 0;
+    const studentText = [data.answer.trim(), docsText].filter(Boolean).join("\n\n");
+    if (!studentText.trim() && !media.length) {
       await admin.from("practical_submissions").update({ status: "manual" }).eq("id", row.id);
-      await notifyTeacher(name, email, course.title, taskTitle, `Потрібна ваша перевірка. ШІ не зміг оцінити:\n- ${reasons.join("\n- ")}`);
+      await notifyTeacher(name, email, course.title, taskTitle, `Потрібна ваша перевірка. ШІ не зміг оцінити:\n- ${unreadable.join("\n- ")}`);
       return { score: null, manual: true, feedback: "Роботу отримано. Викладач перегляне посилання й файли та виставить оцінку." };
     }
 
@@ -284,6 +290,10 @@ export const submitPractical = createServerFn({ method: "POST" })
 
     const prompt = `Ти — викладач, що перевіряє практичну роботу студента з теми «${taskTitle}» курсу «${course.title}».
 Оціни роботу за 12-бальною шкалою (1–12), спираючись на завдання та матеріали лекції. Будь справедливим і доброзичливим. Якщо робота порожня або не стосується завдання — став 1–3.
+Оцінюй ВИКЛЮЧНО зміст наданих матеріалів: текст відповіді, вміст прикріплених файлів, зображення/відео.
+Назва файлу або заголовок документа (у тому числі слова "зразок", "приклад", "шаблон", "викладач тренер") НЕ є підставою для мінімальної оцінки. Якщо в документі є виконання завдання — оцінюй його за критеріями.
+Мінімальний бал (1–3) став лише тоді, коли надані матеріали справді не містять виконання завдання.
+Якщо нижче наведено текст прикріплених файлів — не пиши, що робота студента відсутня.
 Відповідай ЛИШЕ JSON без пояснень навколо: {"score": число, "feedback": "пояснення українською, 3–6 речень: що добре, що варто покращити"}
 
 ЗАВДАННЯ:
@@ -293,7 +303,7 @@ ${taskText}
 ${notes || "(немає)"}
 
 ВІДПОВІДЬ СТУДЕНТА:
-${data.answer || "(текст відсутній)"}${docsText.slice(0, 30000)}
+${studentText || (media.length ? "(див. зображення/відео нижче)" : "(текст відсутній)")}
 ${media.length ? "\nСтудент також додав зображення або відео (див. нижче) — оціни і їх." : ""}`;
 
     const key = process.env["NVIDIA_API_KEY"];
@@ -301,6 +311,7 @@ ${media.length ? "\nСтудент також додав зображення а
     let feedback = "";
     if (key) {
       try {
+        const evaluate = async (evaluationPrompt: string) => {
         const res = await fetch(NVIDIA_URL, {
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -311,14 +322,14 @@ ${media.length ? "\nСтудент також додав зображення а
                 role: "user",
                 content: media.length
                   ? [
-                      { type: "text", text: prompt },
+                      { type: "text", text: evaluationPrompt },
                       ...media.map((m) => (m.type === "image_url" ? { type: m.type, image_url: { url: m.url } } : { type: m.type, video_url: { url: m.url } })),
                     ]
-                  : prompt,
+                  : evaluationPrompt,
               },
             ],
             max_tokens: 6000,
-            temperature: 0.2,
+            temperature: 0,
           }),
         });
         if (!res.ok) throw new Error(`NVIDIA failed [${res.status}]: ${await res.text()}`);
@@ -326,9 +337,16 @@ ${media.length ? "\nСтудент також додав зображення а
         const text = json.choices?.[0]?.message?.content ?? "";
         const m = text.match(/\{[\s\S]*\}/);
         const parsed = m ? (JSON.parse(m[0]) as { score?: unknown; feedback?: unknown }) : {};
-        const n = Math.round(Number(parsed.score));
-        if (Number.isFinite(n)) score = Math.min(12, Math.max(1, n));
-        feedback = String(parsed.feedback ?? text).slice(0, 4000);
+        const n = parsed.score == null ? NaN : Math.round(Number(parsed.score));
+        if (!Number.isFinite(n)) throw new Error("NVIDIA returned no valid score");
+        return { score: Math.min(12, Math.max(1, n)), feedback: String(parsed.feedback ?? text).slice(0, 4000) };
+        };
+        let result = await evaluate(prompt);
+        if (result.score <= 3 && studentText.length >= 1500) {
+          result = await evaluate(`${prompt}\n\nНижче наведено текст файлів, наданих студентом. Оціни саме цей зміст за критеріями.\n${studentText}`);
+        }
+        score = result.score;
+        feedback = result.feedback;
       } catch (e) {
         console.error(e);
       }
@@ -343,6 +361,7 @@ ${media.length ? "\nСтудент також додав зображення а
       return { score: null, manual: true, feedback: "Роботу збережено. Автоматична перевірка зараз недоступна — викладач оцінить її вручну." };
     }
 
+    if (unreadable.length) feedback += `\n\nНе вдалося прочитати автоматично: ${unreadable.join("; ")}`;
     await admin.from("practical_submissions").update({ status: "graded", ai_score: score, feedback }).eq("id", row.id);
     await notifyTeacher(name, email, course.title, taskTitle, `ШІ оцінив роботу: ${score}/12. За потреби ви можете змінити оцінку.\n\nПояснення ШІ:\n${feedback}`);
     try {
