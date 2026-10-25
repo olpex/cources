@@ -1,5 +1,5 @@
 - [x] Fix practical attachment grading, unreadable-item handling and one low-score retry; ten production-handler regression tests pass and automatic build/typecheck is OK.
-- [ ] Request publication of the verified practical grading fix.
+- [x] Publication of the verified practical grading fix scheduled for https://cources.lovable.app.
 - [x] Add assistant buttons to all three courses, session chat, switching, sources, errors and full-screen mobile dialog; verified real answers with the service's allowed origin and nine passing tests.
 - [ ] Enable unmodified preview chat: external service currently allows cources.lovable.app but omits CORS permission for the preview domain; requires the external service owner to allow that origin.
 - [x] Move forum access before Viber in every course; preserve header feedback.
