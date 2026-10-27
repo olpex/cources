@@ -309,7 +309,7 @@ export function CoursesLanding() {
             </div>
           </div>
           <div className="mt-8 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-            <p className="leading-relaxed text-muted-foreground">
+            <p className="leading-relaxed text-primary">
               Прошу вас поділитися враженнями від навчання. Ваші відгуки допомагають мені
               вдосконалювати якість викладання. Дякую!
             </p>
