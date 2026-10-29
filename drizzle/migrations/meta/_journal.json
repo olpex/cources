@@ -64,13 +64,6 @@
       "when": 1792136366938,
       "tag": "0008_enable_site_content_rls",
       "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1793304279733,
-      "tag": "0009_test_result_exclusions",
-      "breakpoints": true
     }
   ]
 }

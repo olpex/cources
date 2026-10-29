@@ -67,7 +67,6 @@ import { ExternalCourses } from "@/components/ExternalCourses";
 import { CourseAssistant } from "@/components/CourseAssistant";
 import { assistantCourseKey } from "@/lib/course-assistant";
 import { CourseResults } from "@/components/CourseResults";
-import { TestExclusions } from "@/components/TestExclusions";
 import { PracticalButton, PracticalResults } from "@/components/PracticalWork";
 import { ModuleMaterials } from "@/components/ModuleMaterials";
 import { ImportDocDialog } from "@/components/ImportDocDialog";
@@ -391,7 +390,6 @@ export function CoursesLanding() {
         </div>
       </header>
 
-      {admin && <TestExclusions />}
       <div className="mx-auto max-w-6xl divide-y divide-border px-6">
         {courses.map((course, index) => {
         const courseOff = course.active === false;

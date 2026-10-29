@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { filterExcludedTests } from "@/lib/test-exclusions";
 
 export type ResultRow = { module: string; time: string; score: string; name: string };
 
@@ -15,12 +14,7 @@ export const fetchCourseResults = createServerFn({ method: "POST" })
     const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
     if (!lovableKey || !sheetsKey) throw new Error("Таблицю результатів не підключено");
     const { readResultsSheet } = await import("@/lib/results-sheet.server");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Private exclusion emails are read only inside the server boundary; fail
-    // closed if unavailable rather than leaking excluded students' results.
-    const { data: exclusions, error } = await supabaseAdmin.from("test_result_exclusions").select("email");
-    if (error) throw new Error("Не вдалося застосувати список виключень");
-    const sheet = filterExcludedTests(await readResultsSheet(lovableKey, sheetsKey), (exclusions ?? []).map((row) => row.email));
+    const sheet = await readResultsSheet(lovableKey, sheetsKey);
     const wanted = new Set(data.modules.map(normTitle).filter(Boolean));
     // Only columns A–D are returned: email (column E) is never sent to the browser.
     return sheet
@@ -66,9 +60,6 @@ export const fetchCourseSummary = createServerFn({ method: "POST" })
       }
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: exclusions, error: exclusionsError } = await supabaseAdmin.from("test_result_exclusions").select("email");
-    if (exclusionsError) throw new Error("Не вдалося застосувати список виключень");
-    sheet = filterExcludedTests(sheet, (exclusions ?? []).map((row) => row.email));
     const { data: subs } = await supabaseAdmin
       .from("practical_submissions")
       .select("id, user_id, email, module_id, module_title, student_name, ai_score, teacher_score, created_at, status")

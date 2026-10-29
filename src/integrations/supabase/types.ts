@@ -280,21 +280,6 @@ export type Database = {
         }
         Relationships: []
       }
-      test_result_exclusions: {
-        Row: {
-          created_at: string
-          email: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-        }
-        Relationships: []
-      }
       thread_watchers: {
         Row: {
           created_at: string

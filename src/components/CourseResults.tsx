@@ -71,7 +71,6 @@ export function CourseResults({
   const busyRef = useRef(false);
   const mountedRef = useRef(true);
   const latestRef = useRef<ResultRow[] | null>(null);
-  const exclusionsVersion = useRef(0);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -90,12 +89,11 @@ export function CourseResults({
     };
     const check = async () => {
       if (busyRef.current) return;
-      const version = exclusionsVersion.current;
       busyRef.current = true;
       try {
         const r = await load({ data: { modules: modulesKey.split("|") } });
         const sorted = r.sort((a, b) => parseTime(b.time) - parseTime(a.time));
-        if (active && mountedRef.current && version === exclusionsVersion.current) {
+        if (active && mountedRef.current) {
           latestRef.current = sorted;
           setRows(sorted);
           updateBell(sorted);
@@ -140,35 +138,21 @@ export function CourseResults({
   };
 
   const fetchRows = async (acknowledge = false) => {
-    const version = exclusionsVersion.current;
     setBusy(true);
     setError(null);
     try {
       const r = await load({ data: { modules } });
-      if (!mountedRef.current || version !== exclusionsVersion.current) return;
       const sorted = r.sort((a, b) => parseTime(b.time) - parseTime(a.time));
       latestRef.current = sorted;
       setRows(sorted);
       if (acknowledge) markSeen(sorted);
       else setHasNew(hasUnseenResults(sorted, readSeenResults(localStorage, seenKey), hidden));
     } catch (e) {
-      if (version === exclusionsVersion.current) setError(e instanceof Error ? e.message : "Помилка завантаження");
+      setError(e instanceof Error ? e.message : "Помилка завантаження");
     } finally {
-      if (version === exclusionsVersion.current) setBusy(false);
+      setBusy(false);
     }
   };
-
-  useEffect(() => {
-    const refresh = () => {
-      ++exclusionsVersion.current;
-      latestRef.current = null;
-      setRows(null);
-      setHasNew(false);
-      void fetchRows();
-    };
-    window.addEventListener("test-exclusions-changed", refresh);
-    return () => window.removeEventListener("test-exclusions-changed", refresh);
-  }, [modulesKey, hiddenKey, seenKey, load]);
 
   const toggle = () => {
     const next = !open;
