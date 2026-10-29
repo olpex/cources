@@ -395,18 +395,26 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
   }, [courseId, edit, user?.id]);
 
   useEffect(() => {
-    const run = () =>
-      loadSummary({ data: { courseId, modules: modulesKey.split("|") } })
-        .then(setStudents)
+    let active = true;
+    let version = 0;
+    const run = () => {
+      const current = ++version;
+      return loadSummary({ data: { courseId, modules: modulesKey.split("|") } })
+        .then((next) => { if (active && current === version) setStudents(next); })
         .catch(() => {});
+    };
+    const exclusionsChanged = () => { void run(); };
     void run();
     const t = window.setInterval(run, 10000);
     window.addEventListener("practical-results-changed", run);
     window.addEventListener("focus", run);
+    window.addEventListener("test-exclusions-changed", exclusionsChanged);
     return () => {
+      active = false;
       window.clearInterval(t);
       window.removeEventListener("practical-results-changed", run);
       window.removeEventListener("focus", run);
+      window.removeEventListener("test-exclusions-changed", exclusionsChanged);
     };
   }, [loadSummary, courseId, modulesKey, rows.length, tick]);
 
