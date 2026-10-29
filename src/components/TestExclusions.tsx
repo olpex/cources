@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ChevronDown, Loader2, Plus, ShieldMinus, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Users, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,8 +54,8 @@ export function TestExclusions() {
   };
   return (
     <section className="mx-auto max-w-6xl px-6 py-7" aria-label="Чорний список">
-      <Button variant="outline" className="h-auto gap-3 whitespace-normal px-5 py-3 text-left text-base" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="test-blacklist-content">
-        <ShieldMinus className="size-5 shrink-0" />Чорний список ({emails.length})
+      <Button variant="outline" className="h-11 max-w-full gap-2 bg-background px-5 py-2 text-left text-base hover:bg-background data-[state=open]:bg-background" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="test-blacklist-content">
+        <Users className="size-5 shrink-0" />Студенти — чорний список ({emails.length})
         <ChevronDown className={`size-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
       {open && <div id="test-blacklist-content" className="mt-4 max-w-[52.5rem] space-y-3">
