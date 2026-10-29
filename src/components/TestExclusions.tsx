@@ -4,6 +4,7 @@ import { ChevronDown, Loader2, Plus, ShieldMinus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { changeTestExclusion, listTestExclusions } from "@/lib/test-exclusions.functions";
 
 export function TestExclusions() {
@@ -52,21 +53,24 @@ export function TestExclusions() {
     } finally { setBusy(false); }
   };
   return (
-    <section className="mx-auto max-w-6xl px-6 py-5" aria-label="Виключення з результатів тестів">
-      <Button variant="ghost" className="h-auto w-full justify-between gap-3 whitespace-normal px-0 text-left" onClick={() => setOpen((value) => !value)} aria-expanded={open}>
-        <span className="flex items-center gap-2"><ShieldMinus className="size-5 shrink-0 text-primary" />Виключення з результатів тестів ({emails.length})</span>
+    <section className="mx-auto max-w-6xl px-6 py-7" aria-label="Чорний список">
+      <Button variant="outline" className="h-auto gap-3 whitespace-normal px-5 py-3 text-left text-base" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="test-blacklist-content">
+        <ShieldMinus className="size-5 shrink-0" />Чорний список ({emails.length})
         <ChevronDown className={`size-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </Button>
-      {open && <div className="mt-3 space-y-3">
-        <form className="flex flex-wrap gap-2" onSubmit={(event) => { event.preventDefault(); void save(email, false); }}>
-          <Input type="email" required maxLength={320} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email студента" aria-label="Email студента для виключення" className="min-w-0 flex-1" disabled={busy} />
-          <Button type="submit" disabled={busy || !email.trim()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}Додати</Button>
+      {open && <div id="test-blacklist-content" className="mt-4 max-w-[52.5rem] space-y-3">
+        <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); void save(email, false); }}>
+          <Label htmlFor="test-blacklist-email" className="text-base">Email студента</Label>
+          <div className="flex flex-wrap gap-3">
+            <Input id="test-blacklist-email" type="email" required maxLength={320} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="student@gmail.com" aria-label="Email студента для виключення" className="h-11 min-w-0 flex-1 text-base" disabled={busy} />
+            <Button type="submit" className="h-11 px-5 text-base" disabled={busy || !email.trim()}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}Додати</Button>
+          </div>
         </form>
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         {!emails.length && !error && <p className="text-sm text-muted-foreground">Список порожній.</p>}
         <ul className="divide-y divide-border">
-          {emails.map((value) => <li key={value} className="flex items-center justify-between gap-3 py-2">
-            <span className="min-w-0 break-all text-sm">{value}</span>
+          {emails.map((value) => <li key={value} className="flex items-center justify-between gap-3 py-4">
+            <span className="min-w-0 break-all text-base">{value}</span>
             <Button size="icon" variant="ghost" disabled={busy} aria-label={`Видалити ${value}`} title="Видалити адресу" onClick={() => void save(value, true)}><Trash2 className="size-4 text-destructive" /></Button>
           </li>)}
         </ul>
