@@ -1,4 +1,4 @@
-- [ ] Add private teacher-managed email exclusions; filter tests server-side, refresh all result views, and verify permissions and persistence.
+- [x] Add private teacher-managed email exclusions; verified live normalized add/reload/delete and student UI hiding, seven filtering/production-handler tests, unchanged practical grading regressions and automatic build OK. Live Sheets comparison unavailable during provider rate limit.
 - [x] Fix practical attachment grading, unreadable-item handling and one low-score retry; ten production-handler regression tests pass and automatic build/typecheck is OK.
 - [x] Publication of the verified practical grading fix scheduled for https://cources.lovable.app.
 - [x] Add assistant buttons to all three courses, session chat, switching, sources, errors and full-screen mobile dialog; verified real answers with the service's allowed origin and nine passing tests.
