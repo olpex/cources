@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import {
@@ -97,7 +97,7 @@ export function CoursesLanding() {
     resetAll,
     moveCourse,
   } = useContent(isTeacher);
-  const allowedKeys = allowedAssistantKeys(courses);
+  const allowedKeys = useMemo(() => allowedAssistantKeys(courses), [courses]);
 
   const [editMode, setEditMode] = useState(false);
   const edit = editMode && isTeacher;
