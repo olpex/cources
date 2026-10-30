@@ -441,7 +441,7 @@ export function CoursesLanding() {
                 )}
                 {!courseLocked && assistantKey && (
                   <div className="mt-3">
-                    <CourseAssistant courseKey={assistantKey} courseTitle={course.title} />
+                    <CourseAssistant courseKey={assistantKey} courseTitle={course.title} allowedKeys={allowedKeys} />
                   </div>
                 )}
               </div>

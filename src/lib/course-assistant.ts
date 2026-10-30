@@ -12,6 +12,14 @@ export function assistantCourseKey(id: string, title: string): string | null {
   return null;
 }
 
+export function allowedAssistantKeys(courses: { id: string; title: string }[]): string[] {
+  return courses.map((course) => assistantCourseKey(course.id, course.title)).filter((key): key is string => key !== null);
+}
+
+export function filterAssistantCourses(courses: AssistantCourse[], allowedKeys: string[]): AssistantCourse[] {
+  return courses.filter((course) => allowedKeys.includes(course.key));
+}
+
 async function request(path: string, init: RequestInit, signal: AbortSignal): Promise<Record<string, unknown>> {
   const controller = new AbortController();
   const abort = () => controller.abort();
