@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import {
@@ -65,7 +65,7 @@ import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { ExternalCourses } from "@/components/ExternalCourses";
 import { CourseAssistant } from "@/components/CourseAssistant";
-import { assistantCourseKey } from "@/lib/course-assistant";
+import { allowedAssistantKeys, assistantCourseKey } from "@/lib/course-assistant";
 import { CourseResults } from "@/components/CourseResults";
 import { PracticalButton, PracticalResults } from "@/components/PracticalWork";
 import { ModuleMaterials } from "@/components/ModuleMaterials";
@@ -97,6 +97,7 @@ export function CoursesLanding() {
     resetAll,
     moveCourse,
   } = useContent(isTeacher);
+  const allowedKeys = useMemo(() => allowedAssistantKeys(courses), [courses]);
 
   const [editMode, setEditMode] = useState(false);
   const edit = editMode && isTeacher;
@@ -441,7 +442,7 @@ export function CoursesLanding() {
                 )}
                 {!courseLocked && assistantKey && (
                   <div className="mt-3">
-                    <CourseAssistant courseKey={assistantKey} courseTitle={course.title} />
+                    <CourseAssistant courseKey={assistantKey} courseTitle={course.title} allowedKeys={allowedKeys} />
                   </div>
                 )}
               </div>
