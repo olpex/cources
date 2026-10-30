@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { askAssistant, assistantCourseKey, ASSISTANT_TIMEOUT_MS } from "./course-assistant";
+import { allowedAssistantKeys, askAssistant, assistantCourseKey, ASSISTANT_TIMEOUT_MS, filterAssistantCourses } from "./course-assistant";
 
 test("AI course preselects ai_career", () => assert.equal(assistantCourseKey("ai", "Штучний інтелект"), "ai_career"));
 test("Digital World preselects cyber", () => assert.equal(assistantCourseKey("digital", "Цифровий світ для початківців"), "cyber"));
