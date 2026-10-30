@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { askAssistant, getAssistantCourses, type AssistantCourse } from "@/lib/course-assistant";
+import { askAssistant, filterAssistantCourses, getAssistantCourses, type AssistantCourse } from "@/lib/course-assistant";
 
 type Message = { role: "student" | "assistant"; text: string; sources?: string[]; error?: boolean };
 
-export function CourseAssistant({ courseKey, courseTitle }: { courseKey: string; courseTitle: string }) {
+export function CourseAssistant({ courseKey, courseTitle, allowedKeys }: { courseKey: string; courseTitle: string; allowedKeys?: string[] }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(courseKey);
   const [courses, setCourses] = useState<AssistantCourse[]>([]);
@@ -29,7 +29,7 @@ export function CourseAssistant({ courseKey, courseTitle }: { courseKey: string;
     const controller = new AbortController();
     setLoadingCourses(true);
     setListError("");
-    getAssistantCourses(controller.signal).then(setCourses).catch((error: unknown) => {
+    getAssistantCourses(controller.signal).then((list) => setCourses(allowedKeys ? filterAssistantCourses(list, allowedKeys) : list)).catch((error: unknown) => {
       if (!controller.signal.aborted) setListError(error instanceof Error ? error.message : "Не вдалося отримати список курсів.");
     }).finally(() => {
       if (!controller.signal.aborted) setLoadingCourses(false);

@@ -65,7 +65,7 @@ import { ModuleDialog } from "@/components/ModuleDialog";
 import { CourseVideos } from "@/components/CourseVideos";
 import { ExternalCourses } from "@/components/ExternalCourses";
 import { CourseAssistant } from "@/components/CourseAssistant";
-import { assistantCourseKey } from "@/lib/course-assistant";
+import { allowedAssistantKeys, assistantCourseKey } from "@/lib/course-assistant";
 import { CourseResults } from "@/components/CourseResults";
 import { PracticalButton, PracticalResults } from "@/components/PracticalWork";
 import { ModuleMaterials } from "@/components/ModuleMaterials";
@@ -97,6 +97,7 @@ export function CoursesLanding() {
     resetAll,
     moveCourse,
   } = useContent(isTeacher);
+  const allowedKeys = allowedAssistantKeys(courses);
 
   const [editMode, setEditMode] = useState(false);
   const edit = editMode && isTeacher;
