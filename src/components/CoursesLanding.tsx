@@ -30,6 +30,7 @@ import {
   Users,
   Globe,
   MessagesSquare,
+  Rss,
 } from "lucide-react";
 import { importGoogleDoc } from "@/lib/gdocs.functions";
 import { Button } from "@/components/ui/button";
@@ -612,12 +613,20 @@ export function CoursesLanding() {
                     </p>
                   </div>
                 </div>
-                <Button asChild variant="forum" size="sm" className="shrink-0">
-                  <Link to="/forum">
-                    <MessagesSquare />
-                    Перейти до форуму
-                  </Link>
-                </Button>
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button asChild variant="forum" size="sm">
+                    <Link to="/forum">
+                      <MessagesSquare />
+                      Перейти до форуму
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/news">
+                      <Rss />
+                      Оголошення
+                    </Link>
+                  </Button>
+                </div>
               </div>
             )}
 

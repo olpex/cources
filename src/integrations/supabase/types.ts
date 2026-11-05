@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcement_subscriptions: {
+        Row: {
+          course_id: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          email: string
+          id?: string
+          name?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      announcements: {
+        Row: {
+          body: string
+          course_id: string
+          created_at: string
+          id: string
+          links: string
+          sent_count: number
+          title: string
+        }
+        Insert: {
+          body: string
+          course_id: string
+          created_at?: string
+          id?: string
+          links?: string
+          sent_count?: number
+          title: string
+        }
+        Update: {
+          body?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          links?: string
+          sent_count?: number
+          title?: string
+        }
+        Relationships: []
+      }
       course_subscriptions: {
         Row: {
           course_id: string

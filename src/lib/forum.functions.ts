@@ -207,3 +207,57 @@ export const sendBroadcast = createServerFn({ method: "POST" })
     });
     return { sent, total: emails.length };
   });
+
+/** Teacher publishes an announcement to the feed and emails subscribers of that course. */
+export const publishAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (d: { courseId: string; courseTitle: string; title: string; body: string; links: string }) => {
+      if (!d.title?.trim() || !d.body?.trim() || !d.courseId) throw new Error("Заповніть заголовок і текст");
+      if (d.title.length > 200 || d.body.length > 10000 || (d.links ?? "").length > 3000)
+        throw new Error("Задовгий текст");
+      return { ...d, links: d.links ?? "" };
+    },
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isTeacher(context.supabase, context.userId))) throw new Error("Лише для викладача");
+    const links = data.links
+      .split(/\s+/)
+      .map((l) => l.trim())
+      .filter((l) => /^https?:\/\/\S+$/i.test(l));
+    const { data: subs, error } = await context.supabase
+      .from("announcement_subscriptions")
+      .select("email")
+      .eq("course_id", data.courseId);
+    if (error) throw error;
+    const emails = [...new Set((subs ?? []).map((s) => s.email.toLowerCase()))];
+    const newsUrl = forumUrl().replace(/\/forum$/, "/news");
+    const signature = "Ваш викладач, Паращук Олег Леонідович";
+    const linksHtml = links.length
+      ? `<p>Посилання:<br>${links.map((l) => `<a href="${escapeHtml(l)}">${escapeHtml(l)}</a>`).join("<br>")}</p>`
+      : "";
+    const html = `<html lang="uk"><body><h2>${escapeHtml(data.title)}</h2><p>${escapeHtml(data.body).replace(/\r?\n/g, "<br>")}</p>${linksHtml}<p>—<br><em>${signature}<br>Усі оголошення: <a href="${escapeHtml(newsUrl)}">${escapeHtml(newsUrl)}</a></em></p></body></html>`;
+    const text = `${data.title}\n\n${data.body}${links.length ? `\n\nПосилання:\n${links.join("\n")}` : ""}\n\n—\n${signature}\nУсі оголошення: ${newsUrl}`;
+    let sent = 0;
+    for (const email of emails) {
+      try {
+        await sendGmail(email, `[${data.courseTitle}] ${data.title}`, text, {
+          senderName: `${data.courseTitle}, оголошення`,
+          html,
+        });
+        sent++;
+      } catch (e) {
+        console.error("announcement send failed", email, e);
+      }
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: insErr } = await supabaseAdmin.from("announcements").insert({
+      course_id: data.courseId,
+      title: data.title.trim(),
+      body: data.body.trim(),
+      links: links.join("\n"),
+      sent_count: sent,
+    });
+    if (insErr) throw insErr;
+    return { sent, total: emails.length };
+  });
