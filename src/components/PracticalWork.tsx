@@ -400,7 +400,7 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
         .then(setStudents)
         .catch(() => {});
     void run();
-    const t = window.setInterval(() => { if (document.visibilityState === "visible") run(); }, 45000);
+    const t = window.setInterval(() => { if (document.visibilityState === "visible") run(); }, 120000);
     window.addEventListener("practical-results-changed", run);
     window.addEventListener("focus", run);
     return () => {
@@ -415,7 +415,7 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
   useEffect(() => {
     void load();
     const refresh = () => void load();
-    const t = window.setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 45000);
+    const t = window.setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 120000);
     window.addEventListener("practical-results-changed", refresh);
     window.addEventListener("focus", refresh);
     return () => {
