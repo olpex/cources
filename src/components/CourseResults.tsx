@@ -113,7 +113,7 @@ export function CourseResults({
     void check();
     const iv = setInterval(() => {
       if (document.visibilityState === "visible") void check();
-    }, 60000);
+    }, 300000);
     window.addEventListener("focus", check);
     window.addEventListener("online", check);
     window.addEventListener("storage", onStorage);
