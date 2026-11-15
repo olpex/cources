@@ -1,3 +1,4 @@
+import { startPolling } from "@/lib/polling";
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, ChevronRight, FileText, Hammer, Loader2, Paperclip, Trash2, Trophy, X } from "lucide-react";
@@ -400,11 +401,11 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
         .then(setStudents)
         .catch(() => {});
     void run();
-    const t = window.setInterval(() => { if (document.visibilityState === "visible") run(); }, 300000);
+    const stopPoll = startPolling(() => { if (document.visibilityState === "visible") run(); }, 300000);
     window.addEventListener("practical-results-changed", run);
     window.addEventListener("focus", run);
     return () => {
-      window.clearInterval(t);
+      stopPoll();
       window.removeEventListener("practical-results-changed", run);
       window.removeEventListener("focus", run);
     };
@@ -415,11 +416,11 @@ export function PracticalResults({ courseId, edit, modules }: { courseId: string
   useEffect(() => {
     void load();
     const refresh = () => void load();
-    const t = window.setInterval(() => { if (document.visibilityState === "visible") refresh(); }, 300000);
+    const stopPoll = startPolling(() => { if (document.visibilityState === "visible") refresh(); }, 300000);
     window.addEventListener("practical-results-changed", refresh);
     window.addEventListener("focus", refresh);
     return () => {
-      window.clearInterval(t);
+      stopPoll();
       window.removeEventListener("practical-results-changed", refresh);
       window.removeEventListener("focus", refresh);
     };
