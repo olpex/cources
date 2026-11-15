@@ -1,3 +1,4 @@
+import { startPolling } from "@/lib/polling";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Award, BellRing, ChevronDown, ChevronRight, Loader2, RefreshCw, Trash2 } from "lucide-react";
@@ -111,7 +112,7 @@ export function CourseResults({
       if (document.visibilityState === "visible") void check();
     };
     void check();
-    const iv = setInterval(() => {
+    const stopPoll = startPolling(() => {
       if (document.visibilityState === "visible") void check();
     }, 300000);
     window.addEventListener("focus", check);
@@ -120,7 +121,7 @@ export function CourseResults({
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       active = false;
-      clearInterval(iv);
+      stopPoll();
       window.removeEventListener("focus", check);
       window.removeEventListener("online", check);
       window.removeEventListener("storage", onStorage);
