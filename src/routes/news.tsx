@@ -58,12 +58,13 @@ function NewsPage() {
   const title = (id: string) => courses.find((c) => c.id === id)?.title ?? "Курс";
 
   const loadFeed = useCallback(async () => {
+    if (!user) return setItems([]);
     const { data } = await supabase
       .from("announcements")
       .select("*")
       .order("created_at", { ascending: false });
     setItems((data as Ann[]) ?? []);
-  }, []);
+  }, [user]);
 
   const loadSubs = useCallback(async () => {
     if (!user) return setMySubs([]);
