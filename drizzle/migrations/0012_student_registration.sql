@@ -3,7 +3,7 @@
 -- The teacher keeps the existing Supabase login for editing; the code login is
 -- only an extra way to bind a device and open a real session.
 
-CREATE TABLE public.student_registrations (
+CREATE TABLE IF NOT EXISTS public.student_registrations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL CHECK (email = lower(email)),
   course_id text NOT NULL,
@@ -16,14 +16,14 @@ CREATE TABLE public.student_registrations (
 );
 
 -- One active course per student: enforced by the database, not only by code.
-CREATE UNIQUE INDEX student_registrations_one_active
+CREATE UNIQUE INDEX IF NOT EXISTS student_registrations_one_active
   ON public.student_registrations (email)
   WHERE status = 'active';
 
-CREATE INDEX student_registrations_course_idx
+CREATE INDEX IF NOT EXISTS student_registrations_course_idx
   ON public.student_registrations (course_id, status);
 
-CREATE TABLE public.student_devices (
+CREATE TABLE IF NOT EXISTS public.student_devices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL CHECK (email = lower(email)),
   course_id text,
@@ -35,9 +35,9 @@ CREATE TABLE public.student_devices (
   revoked_at timestamptz
 );
 
-CREATE INDEX student_devices_email_idx ON public.student_devices (email);
+CREATE INDEX IF NOT EXISTS student_devices_email_idx ON public.student_devices (email);
 
-CREATE TABLE public.student_codes (
+CREATE TABLE IF NOT EXISTS public.student_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email text NOT NULL CHECK (email = lower(email)),
   course_id text,
@@ -50,7 +50,7 @@ CREATE TABLE public.student_codes (
   used_at timestamptz
 );
 
-CREATE INDEX student_codes_email_idx ON public.student_codes (email, created_at DESC);
+CREATE INDEX IF NOT EXISTS student_codes_email_idx ON public.student_codes (email, created_at DESC);
 
 -- These tables are reached only through server functions that use the service
 -- role. RLS is on and no policy is granted, so anon/authenticated cannot read
