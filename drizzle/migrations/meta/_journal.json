@@ -92,6 +92,13 @@
       "when": 1795793132381,
       "tag": "0012_student_registration",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795880000000,
+      "tag": "0013_single_course_subscriptions",
+      "breakpoints": true
     }
   ]
 }

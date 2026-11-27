@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
 import { useContent } from "@/data/store";
 import { publishAnnouncement } from "@/lib/forum.functions";
+import { getRegistrationState } from "@/lib/registration.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,7 +56,28 @@ function NewsPage() {
   const [items, setItems] = useState<Ann[]>([]);
   const [mySubs, setMySubs] = useState<string[]>([]);
   const [filter, setFilter] = useState("all");
+  const [myCourseId, setMyCourseId] = useState<string | null>(null);
+  const [courseKnown, setCourseKnown] = useState(false);
+  const readRegistrationState = useServerFn(getRegistrationState);
   const title = (id: string) => courses.find((c) => c.id === id)?.title ?? "Курс";
+
+  // A registered student may subscribe to one course only — the one they
+  // enrolled in. Everyone else (teacher, old Google flow) keeps all switches.
+  useEffect(() => {
+    let alive = true;
+    void readRegistrationState()
+      .then((s) => {
+        if (!alive) return;
+        setMyCourseId(s.known && s.role === "student" ? (s.courseId ?? null) : null);
+        setCourseKnown(true);
+      })
+      .catch(() => {
+        if (alive) setCourseKnown(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [readRegistrationState]);
 
   const loadFeed = useCallback(async () => {
     if (!user) return setItems([]);
@@ -87,6 +109,10 @@ function NewsPage() {
 
   const toggle = async (courseId: string) => {
     if (!user) return;
+    if (myCourseId && courseId !== myCourseId) {
+      toast.error("Підписка на інший курс недоступна, поки ви навчаєтеся на своєму.");
+      return;
+    }
     if (mySubs.includes(courseId)) {
       await supabase
         .from("announcement_subscriptions")
@@ -151,15 +177,30 @@ function NewsPage() {
         <section className="mt-6 rounded-2xl border border-border bg-card p-5">
           <h2 className="font-semibold">Підписка на оголошення</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            Оберіть курси, оголошення яких хочете отримувати на {user.email}.
+            {myCourseId
+              ? `Ви навчаєтеся на курсі «${title(myCourseId)}», тому оголошення надходять лише з нього. Інші курси доступні після завершення навчання.`
+              : `Оберіть курси, оголошення яких хочете отримувати на ${user.email}.`}
           </p>
           <div className="space-y-2">
-            {courses.map((c) => (
-              <label key={c.id} className="flex items-center justify-between gap-3 text-sm">
-                <span>{c.title}</span>
-                <Switch checked={mySubs.includes(c.id)} onCheckedChange={() => void toggle(c.id)} />
-              </label>
-            ))}
+            {courses.map((c) => {
+              const locked = !!myCourseId && c.id !== myCourseId;
+              return (
+                <label
+                  key={c.id}
+                  className={`flex items-center justify-between gap-3 text-sm ${locked ? "text-muted-foreground" : ""}`}
+                >
+                  <span>
+                    {c.title}
+                    {locked && <span className="ml-2 text-xs">— недоступно</span>}
+                  </span>
+                  <Switch
+                    checked={locked ? false : mySubs.includes(c.id)}
+                    disabled={locked || !courseKnown}
+                    onCheckedChange={() => void toggle(c.id)}
+                  />
+                </label>
+              );
+            })}
           </div>
         </section>
       )}
