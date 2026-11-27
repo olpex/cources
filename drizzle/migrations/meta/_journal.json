@@ -85,6 +85,13 @@
       "when": 1795714866785,
       "tag": "0011_scope_announcements_read",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795793132381,
+      "tag": "0012_student_registration",
+      "breakpoints": true
     }
   ]
 }
