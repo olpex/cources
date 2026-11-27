@@ -3,8 +3,46 @@ import { z } from "zod";
 
 export type ResultRow = { module: string; time: string; score: string; name: string };
 
+/**
+ * Module titles are the join key between the Google Doc, the site and the
+ * results sheet, so matching must survive renumbering: the doc numbers modules
+ * "1. Назва" while the sheet may still hold "1.1 Назва". Leading numbers are
+ * therefore dropped before comparison.
+ */
 export function normTitle(s: string) {
-  return s.toLowerCase().replace(/[’'`ʼ]/g, "'").replace(/[^\p{L}\p{N}.']+/gu, " ").trim();
+  return s
+    .toLowerCase()
+    .replace(/[’'`ʼ]/g, "'")
+    .replace(/[^\p{L}\p{N}.']+/gu, " ")
+    .trim()
+    .replace(/^\d+(?:\s*\.\s*\d+)*\.?(?=\s)/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Modules were renumbered and some were retitled in the source Google Doc
+ * (27.11.2026). The results sheet keeps the wording students answered under,
+ * so map the old wording forward instead of losing those results.
+ * Keys and values are normTitle() output.
+ */
+const TITLE_ALIASES: Record<string, string> = {
+  "найбільш результативні техніки промтингу в llm": "результативні техніки промтингу llm",
+  "штучний інтелект у повсякденній роботі": "ші у повсякденній роботі",
+  "аудит навичок і персональний план розвитку": "аудит навичок і план розвитку",
+  "промтинг у створенні зображень відео та аудіо": "промтинг зображень відео та аудіо",
+  "штучний інтелект у працевлаштуванні": "ші у працевлаштуванні",
+  "штучний інтелект під час україно-російської війни": "ші під час україно-російської війни",
+  "тенденції і тренди штучного інтелекту": "тенденції і тренди ші",
+  "artificial analysis як насправді вимірюють ші": "artificial analysis вимірювання ші",
+  "як влаштовані і працюють великі мовні моделі llm": "як влаштовані і працюють llm",
+  "olpex.github.iollm": "olpex.github.io llm",
+};
+
+/** Canonical form used on both sides of the comparison. */
+export function matchKey(s: string) {
+  const n = normTitle(s);
+  return TITLE_ALIASES[n] ?? n;
 }
 
 export const fetchCourseResults = createServerFn({ method: "POST" })
@@ -15,11 +53,22 @@ export const fetchCourseResults = createServerFn({ method: "POST" })
     if (!lovableKey || !sheetsKey) throw new Error("Таблицю результатів не підключено");
     const { readResultsSheet } = await import("@/lib/results-sheet.server");
     const sheet = await readResultsSheet(lovableKey, sheetsKey);
-    const wanted = new Set(data.modules.map(normTitle).filter(Boolean));
+    // Match on the renumbering-insensitive key, then show the current module
+    // title so the UI keeps the new numbering and its module filter works.
+    const current = new Map<string, string>();
+    for (const m of data.modules) {
+      const k = matchKey(m);
+      if (k && !current.has(k)) current.set(k, m);
+    }
     // Only columns A–D are returned: email (column E) is never sent to the browser.
     return sheet
-      .filter((r) => r[0] && wanted.has(normTitle(r[0])))
-      .map((r) => ({ module: r[0] ?? "", time: r[1] ?? "", score: r[2] ?? "", name: r[3] ?? "" }));
+      .filter((r) => r[0] && current.has(matchKey(r[0])))
+      .map((r) => ({
+        module: current.get(matchKey(r[0]!)) ?? r[0] ?? "",
+        time: r[1] ?? "",
+        score: r[2] ?? "",
+        name: r[3] ?? "",
+      }));
   });
 
 export type SummaryRow = {
@@ -49,7 +98,11 @@ export const fetchCourseSummary = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<SummaryRow[]> => {
     const lovableKey = process.env["LOVABLE_API_KEY"];
     const sheetsKey = process.env["GOOGLE_SHEETS_API_KEY"];
-    const wanted = new Set(data.modules.map(normTitle).filter(Boolean));
+    const current = new Map<string, string>();
+    for (const m of data.modules) {
+      const k = matchKey(m);
+      if (k && !current.has(k)) current.set(k, m);
+    }
     let sheet: string[][] = [];
     if (lovableKey && sheetsKey) {
       const { readResultsSheet } = await import("@/lib/results-sheet.server");
@@ -85,7 +138,7 @@ export const fetchCourseSummary = createServerFn({ method: "POST" })
       a.practical.push({ id: r.id, module_title: r.module_title, score: awaiting ? null : (r.teacher_score ?? r.ai_score), awaiting });
     }
     for (const r of sheet) {
-      if (!r[0] || !wanted.has(normTitle(r[0])) || !r[4]) continue;
+      if (!r[0] || !current.has(matchKey(r[0])) || !r[4]) continue;
       const a = get(r[4]);
       const n = num(r[2] ?? "");
       if (n !== null) a.tests.push(n);
