@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
 import { useContent } from "@/data/store";
 import { notifyNewThread, notifyReply, sendBroadcast } from "@/lib/forum.functions";
+import { getRegistrationState } from "@/lib/registration.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,6 +82,8 @@ function ForumPage() {
   const [subs, setSubs] = useState<string[]>([]);
   const [blocked, setBlocked] = useState<string[]>([]);
   const [banned, setBanned] = useState(false);
+  const [myCourseId, setMyCourseId] = useState<string | null>(null);
+  const readRegistrationState = useServerFn(getRegistrationState);
   const [filterCourse, setFilterCourse] = useState("all");
   const [filterCat, setFilterCat] = useState("all");
   const [open, setOpen] = useState<string | null>(null);
@@ -113,6 +116,18 @@ function ForumPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    let alive = true;
+    void readRegistrationState()
+      .then((s) => {
+        if (alive) setMyCourseId(s.known && s.role === "student" ? (s.courseId ?? null) : null);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [readRegistrationState]);
+
   const signIn = async () => {
     setError(null);
     const res = await lovable.auth.signInWithOAuth("google", {
@@ -126,6 +141,10 @@ function ForumPage() {
 
   const toggleSub = async (courseId: string) => {
     if (!user) return;
+    if (myCourseId && courseId !== myCourseId) {
+      setError("Підписка на інший курс недоступна, поки ви навчаєтеся на своєму.");
+      return;
+    }
     if (subs.includes(courseId)) {
       await supabase
         .from("course_subscriptions")
@@ -203,22 +222,31 @@ function ForumPage() {
                 навчання ви можете відписатися будь-коли.
               </p>
               <div className="mt-3 space-y-2">
-                {courses.map((c) =>
-                  blocked.includes(c.id) ? (
-                    <p key={c.id} className="flex items-center gap-3 text-sm text-muted-foreground">
-                      <Switch checked={false} disabled />
-                      {c.title} — підписка недоступна (вас виключено викладачем)
-                    </p>
-                  ) : (
-                    <label key={c.id} className="flex items-center gap-3 text-sm">
+                {courses.map((c) => {
+                  if (blocked.includes(c.id)) {
+                    return (
+                      <p key={c.id} className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <Switch checked={false} disabled />
+                        {c.title} — підписка недоступна (вас виключено викладачем)
+                      </p>
+                    );
+                  }
+                  const locked = !!myCourseId && c.id !== myCourseId;
+                  return (
+                    <label
+                      key={c.id}
+                      className={`flex items-center gap-3 text-sm ${locked ? "text-muted-foreground" : ""}`}
+                    >
                       <Switch
-                        checked={subs.includes(c.id)}
+                        checked={locked ? false : subs.includes(c.id)}
+                        disabled={locked}
                         onCheckedChange={() => void toggleSub(c.id)}
                       />
                       {c.title}
+                      {locked && <span className="text-xs">— недоступно</span>}
                     </label>
-                  ),
-                )}
+                  );
+                })}
               </div>
               {subs.length > 0 && (
                 <Button
