@@ -69,6 +69,56 @@ async function isBanned(email: string) {
   return !!data;
 }
 
+type AdminDb = Awaited<ReturnType<typeof admin>>;
+
+/**
+ * A magic-link token is only accepted by `verifyOtp` with the type Supabase
+ * issued it for. Returning the bare hash made the client guess, and a wrong
+ * guess throws, so the gate reopened right after a successful registration.
+ */
+async function mintLink(db: AdminDb, email: string) {
+  const { data: link, error } = await db.auth.admin.generateLink({ type: "magiclink", email });
+  if (error || !link?.properties?.hashed_token) return null;
+  return {
+    ok: true as const,
+    tokenHash: link.properties.hashed_token,
+    otpType: link.properties.verification_type ?? "magiclink",
+  };
+}
+
+/** Is this very browser already bound to that address by its device cookie? */
+async function sameDevice(email: string) {
+  const token = getCookie(DEVICE_COOKIE);
+  if (!token) return false;
+  const db = await admin();
+  const { data } = await db
+    .from("student_devices")
+    .select("email, revoked_at")
+    .eq("token_hash", await sha256(token))
+    .maybeSingle();
+  return !!data && !data.revoked_at && data.email === email;
+}
+
+/**
+ * Re-entry is a privilege, not a stored fact: the registration must still be
+ * active and the address must not have been banned after the code was spent.
+ */
+async function stillAllowed(
+  db: AdminDb,
+  email: string,
+  row: { course_id: string | null; role: string },
+) {
+  if (await isBanned(email)) return false;
+  if (row.role === "teacher") return true;
+  const { data: reg } = await db
+    .from("student_registrations")
+    .select("status")
+    .eq("email", email)
+    .eq("course_id", row.course_id ?? "")
+    .maybeSingle();
+  return reg?.status === "active";
+}
+
 function setDeviceCookie(token: string) {
   setCookie(DEVICE_COOKIE, token, {
     httpOnly: true,
@@ -127,7 +177,8 @@ export const getRegistrationState = createServerFn({ method: "POST" }).handler(a
  */
 export const resumeSession = createServerFn({ method: "POST" }).handler(
   async (): Promise<
-    { ok: true; tokenHash: string; courseId: string | null; role: "student" | "teacher" } | { ok: false }
+    | { ok: true; tokenHash: string; otpType: string; courseId: string | null; role: "student" | "teacher" }
+    | { ok: false }
   > => {
     const token = getCookie(DEVICE_COOKIE);
     if (!token) return { ok: false };
@@ -157,6 +208,7 @@ export const resumeSession = createServerFn({ method: "POST" }).handler(
     return {
       ok: true,
       tokenHash: link.properties.hashed_token,
+      otpType: link.properties.verification_type ?? "magiclink",
       courseId: device.course_id ?? null,
       role: device.role === "teacher" ? "teacher" : "student",
     };
@@ -236,7 +288,7 @@ export const requestRegistrationCode = createServerFn({ method: "POST" })
 /** Check the code, bind the device, and hand the client a token to open a session. */
 export const verifyRegistrationCode = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; code: string }) => d)
-  .handler(async ({ data }): Promise<{ ok: true; tokenHash: string } | RefusalResult> => {
+  .handler(async ({ data }): Promise<{ ok: true; tokenHash: string; otpType: string } | RefusalResult> => {
     const email = normalizeEmail(data.email);
     const code = normalizeCode(data.code);
     if (code.length !== 6) return refuse("invalid-code", "Код складається з шести цифр.");
@@ -252,6 +304,13 @@ export const verifyRegistrationCode = createServerFn({ method: "POST" })
     const matched = !!row && (await sha256(`${email}:${code}`)) === row.code_hash;
     const decision = decideCode({ row: row ?? null, matched, now: Date.now() });
     if (!decision.ok) {
+      // The code was already spent, but this device may hold the binding it
+      // created. Never strand a student on "code already used": hand back a
+      // fresh session for the same device instead.
+      if (row?.used_at && (await sameDevice(email)) && (await stillAllowed(db, email, row))) {
+        const again = await mintLink(db, email);
+        if (again) return again;
+      }
       if (row && !row.used_at && decision.reason === "invalid-code" && row.attempts < CODE_MAX_ATTEMPTS) {
         await db.from("student_codes").update({ attempts: row.attempts + 1 }).eq("id", row.id);
       }
@@ -328,7 +387,11 @@ export const verifyRegistrationCode = createServerFn({ method: "POST" })
     }
 
     setDeviceCookie(token);
-    return { ok: true, tokenHash: link.properties.hashed_token };
+    return {
+      ok: true,
+      tokenHash: link.properties.hashed_token,
+      otpType: link.properties.verification_type ?? "magiclink",
+    };
   });
 
 /** Forget this device (the registration itself stays). */
