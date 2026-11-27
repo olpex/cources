@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { filterRecipients } from "@/lib/mailing-rules";
+import { registrationFactsFor } from "@/lib/registration-facts.server";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_mail/gmail/v1";
 const TEACHER_EMAIL = "olppara@gmail.com";
@@ -180,7 +182,18 @@ export const sendBroadcast = createServerFn({ method: "POST" })
       .select("email")
       .eq("course_id", data.courseId);
     if (error) throw error;
-    const emails = [...new Set((subs ?? []).map((s) => s.email.toLowerCase()))];
+    const subscribed = [...new Set((subs ?? []).map((s) => s.email.toLowerCase()))];
+    // The sender runs with the service role, which bypasses RLS: a row created
+    // outside the policy would still be mailed. Check the registration facts.
+    const emails = filterRecipients(
+      subscribed,
+      await registrationFactsFor(subscribed),
+      data.courseId,
+      false,
+    );
+    if (emails.length < subscribed.length) {
+      console.warn("broadcast skipped", subscribed.length - emails.length, "foreign subscribers");
+    }
     const url = forumUrl();
     const signature = "Ваш викладач, Паращук Олег Леонідович";
     const html = `<html lang="uk"><body><p>${escapeHtml(data.body).replace(/\r?\n/g, "<br>")}</p><p>—<br><em>${signature}<br>Форум курсу: <a href="${escapeHtml(url)}">${escapeHtml(url)}</a></em></p></body></html>`;
@@ -230,7 +243,18 @@ export const publishAnnouncement = createServerFn({ method: "POST" })
       .select("email")
       .eq("course_id", data.courseId);
     if (error) throw error;
-    const emails = [...new Set((subs ?? []).map((s) => s.email.toLowerCase()))];
+    const subscribed = [...new Set((subs ?? []).map((s) => s.email.toLowerCase()))];
+    // Same reason as the broadcast: the service role bypasses RLS, so the
+    // recipient list is re-checked against the registrations themselves.
+    const emails = filterRecipients(
+      subscribed,
+      await registrationFactsFor(subscribed),
+      data.courseId,
+      false,
+    );
+    if (emails.length < subscribed.length) {
+      console.warn("announcement skipped", subscribed.length - emails.length, "foreign subscribers");
+    }
     const newsUrl = forumUrl().replace(/\/forum$/, "/news");
     const signature = "Ваш викладач, Паращук Олег Леонідович";
     const linksHtml = links.length
