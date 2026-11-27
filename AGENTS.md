@@ -22,3 +22,4 @@
 - Google Doc sync supports scopes (all / notes-only / practicals-only) in mergeDoc so teachers can refresh slide notes and practical-task texts independently without overwriting the other.
 - Keep the course assistant in a shared per-course dialog with browser-only requests to the existing external service, explicit course-key mapping and abortable requests; this preserves course context and session history without introducing backend infrastructure or stale cross-course answers.
 - Regression-test the production practical submission handler with isolated storage, NVIDIA and Gmail adapters so attachment reading, partial grading and bounded retries are checked without creating submissions or sending real email.
+- Keep pending registration migration query types in a local type-only extension of the generated database contract, so type refreshes do not break registration code or require editing generated clients; the extension does not apply schema changes.

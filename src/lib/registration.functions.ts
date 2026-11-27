@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { RegistrationDatabase } from "@/lib/registration-database";
 import { getRequestHeader, setCookie, deleteCookie, getCookie } from "@tanstack/react-start/server";
 import { sendGmail } from "@/lib/forum.functions";
 import {
@@ -50,7 +52,9 @@ function randomToken() {
 
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  // Keep generated clients untouched; add the existing migration's query
+  // contract locally while its objects are absent from generated live types.
+  return supabaseAdmin as unknown as SupabaseClient<RegistrationDatabase>;
 }
 
 async function isTeacherEmail(email: string) {
