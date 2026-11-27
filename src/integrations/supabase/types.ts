@@ -301,114 +301,6 @@ export type Database = {
         }
         Relationships: []
       }
-      student_codes: {
-        Row: {
-          attempts: number
-          code_hash: string
-          course_id: string | null
-          created_at: string
-          email: string
-          expires_at: string
-          full_name: string
-          id: string
-          role: string
-          used_at: string | null
-        }
-        Insert: {
-          attempts?: number
-          code_hash: string
-          course_id?: string | null
-          created_at?: string
-          email: string
-          expires_at: string
-          full_name?: string
-          id?: string
-          role?: string
-          used_at?: string | null
-        }
-        Update: {
-          attempts?: number
-          code_hash?: string
-          course_id?: string | null
-          created_at?: string
-          email?: string
-          expires_at?: string
-          full_name?: string
-          id?: string
-          role?: string
-          used_at?: string | null
-        }
-        Relationships: []
-      }
-      student_devices: {
-        Row: {
-          course_id: string | null
-          created_at: string
-          email: string
-          id: string
-          last_seen_at: string
-          revoked_at: string | null
-          role: string
-          token_hash: string
-          user_agent: string
-        }
-        Insert: {
-          course_id?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          last_seen_at?: string
-          revoked_at?: string | null
-          role?: string
-          token_hash: string
-          user_agent?: string
-        }
-        Update: {
-          course_id?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          last_seen_at?: string
-          revoked_at?: string | null
-          role?: string
-          token_hash?: string
-          user_agent?: string
-        }
-        Relationships: []
-      }
-      student_registrations: {
-        Row: {
-          course_id: string
-          created_at: string
-          email: string
-          ended_at: string | null
-          full_name: string
-          id: string
-          note: string
-          status: string
-        }
-        Insert: {
-          course_id: string
-          created_at?: string
-          email: string
-          ended_at?: string | null
-          full_name?: string
-          id?: string
-          note?: string
-          status?: string
-        }
-        Update: {
-          course_id?: string
-          created_at?: string
-          email?: string
-          ended_at?: string | null
-          full_name?: string
-          id?: string
-          note?: string
-          status?: string
-        }
-        Relationships: []
-      }
       subscription_allows: {
         Row: {
           course_id: string
@@ -525,7 +417,6 @@ export type Database = {
       }
       is_banned: { Args: never; Returns: boolean }
       is_sub_blocked: { Args: { _course_id: string }; Returns: boolean }
-      student_is_teacher_email: { Args: { _email: string }; Returns: boolean }
       practical_scores: {
         Args: { _course_id: string }
         Returns: {
