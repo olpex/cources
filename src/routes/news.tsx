@@ -106,6 +106,7 @@ function NewsPage() {
       else toast.success("Ви підписалися — оголошення надходитимуть на пошту");
     }
     void loadSubs();
+    void loadFeed();
   };
 
   const remove = async (a: Ann) => {
