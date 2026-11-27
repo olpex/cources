@@ -56,8 +56,11 @@ test("a second course is refused while the first is active", () => {
   assert.match(r.ok === false ? r.message : "", /один курс/i);
 });
 
-test("the same course cannot be entered twice while active", () => {
-  assert.deepEqual(register({ rows: [{ course_id: "ai", status: "active" }] }), { ok: true });
+test("re-entering the same active course is allowed (new device, cleared cookie)", () => {
+  assert.deepEqual(register({ rows: [{ course_id: "ai", status: "active" }] }), {
+    ok: true,
+    reentry: true,
+  });
 });
 
 test("after the teacher ends the course the same pair is refused forever", () => {

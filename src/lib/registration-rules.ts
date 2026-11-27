@@ -76,7 +76,7 @@ export function decideRegistration(input: {
   isTeacher: boolean;
   banned: boolean;
   rows: RegistrationRow[];
-}): { ok: true } | Refusal {
+}): { ok: true; reentry?: boolean } | Refusal {
   if (!isEmail(input.email)) return refuse("invalid-email", "Перевірте адресу електронної пошти.");
   if (input.isTeacher) return { ok: true };
   if (input.banned) return bannedRefusal();
@@ -86,6 +86,10 @@ export function decideRegistration(input: {
   if (rows.some((r) => r.status === "blocked")) return bannedRefusal();
 
   const active = rows.find((r) => r.status === "active");
+  // Already enrolled in THIS course: the visitor is not a new student, so
+  // re-entry (new device, cleared cookie) must be possible instead of
+  // "this course is already finished for you".
+  if (active && active.course_id === input.courseId) return { ok: true, reentry: true };
   if (active && active.course_id !== input.courseId) return otherCourseRefusal();
 
   if (!active && rows.some((r) => r.course_id === input.courseId)) return endedRefusal();
