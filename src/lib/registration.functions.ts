@@ -120,6 +120,49 @@ export const getRegistrationState = createServerFn({ method: "POST" }).handler(a
   };
 });
 
+/**
+ * Returning visitor on a known device: no code is sent, but a real Supabase
+ * session is still needed, so the server mints a one-time token for the email
+ * the cookie already proved. Refuses if the registration was ended or blocked.
+ */
+export const resumeSession = createServerFn({ method: "POST" }).handler(
+  async (): Promise<
+    { ok: true; tokenHash: string; courseId: string | null; role: "student" | "teacher" } | { ok: false }
+  > => {
+    const token = getCookie(DEVICE_COOKIE);
+    if (!token) return { ok: false };
+    const db = await admin();
+    const { data: device } = await db
+      .from("student_devices")
+      .select("email, course_id, role, revoked_at")
+      .eq("token_hash", await sha256(token))
+      .maybeSingle();
+    if (!device || device.revoked_at) return { ok: false };
+
+    if (device.role !== "teacher") {
+      const { data: reg } = await db
+        .from("student_registrations")
+        .select("status")
+        .eq("email", device.email)
+        .eq("course_id", device.course_id ?? "")
+        .maybeSingle();
+      if (!reg || reg.status !== "active") return { ok: false };
+    }
+
+    const { data: link, error } = await db.auth.admin.generateLink({
+      type: "magiclink",
+      email: device.email,
+    });
+    if (error || !link?.properties?.hashed_token) return { ok: false };
+    return {
+      ok: true,
+      tokenHash: link.properties.hashed_token,
+      courseId: device.course_id ?? null,
+      role: device.role === "teacher" ? "teacher" : "student",
+    };
+  },
+);
+
 type RefusalResult = Refusal;
 
 /** Ask for a 6-digit code. Sent once per device. */

@@ -57,6 +57,8 @@ import { NotesSheet } from "@/components/NotesSheet";
 import { CourseDialog } from "@/components/CourseDialog";
 import { DocViewer, toFormFillUrl, toReadOnlyDocUrl } from "@/components/DocViewer";
 import { PresentationViewer } from "@/components/PresentationViewer";
+import { RegistrationGate } from "@/components/RegistrationGate";
+import { CourseStudents } from "@/components/CourseStudents";
 
 import { ViberIcon } from "@/components/ViberIcon";
 import { TelegramIcon } from "@/components/TelegramIcon";
@@ -81,10 +83,11 @@ import { toast } from "sonner";
 type Confirm = { title: string; description: string; action: () => void } | null;
 
 export function CoursesLanding() {
-  const { user, isTeacher } = useAuth();
+  const { user, isTeacher, loading: authLoading } = useAuth();
   
   const {
     courses,
+    hydrated,
     storageError,
     addCourse,
     updateCourse,
@@ -106,6 +109,9 @@ export function CoursesLanding() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const admin = mounted && isTeacher;
+
+  /** Course the signed-in student is enrolled in — the other courses stay visible but locked. */
+  const [studentCourseId, setStudentCourseId] = useState<string | null>(null);
 
   const [notesFor, setNotesFor] = useState<{ course: CourseItem; module: ModuleItem } | null>(null);
   const [notesOpen, setNotesOpen] = useState(false);
@@ -158,6 +164,16 @@ export function CoursesLanding() {
 
   return (
     <main className="min-h-screen">
+      {mounted && !authLoading && !isTeacher && (
+        <RegistrationGate
+          courses={courses.map((c) => ({ id: c.id, title: c.title, active: c.active }))}
+          loading={!hydrated}
+          onReady={(courseId) => {
+            setStudentCourseId(courseId);
+            setMounted(true);
+          }}
+        />
+      )}
       <header className="surface-grid border-b border-border">
         <div className="mx-auto max-w-6xl px-6 pt-20 pb-8 sm:pt-28 sm:pb-10">
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -395,7 +411,8 @@ export function CoursesLanding() {
       <div className="mx-auto max-w-6xl divide-y divide-border px-6">
         {courses.map((course, index) => {
         const courseOff = course.active === false;
-        const courseLocked = courseOff && !admin;
+        const otherCourse = !!studentCourseId && course.id !== studentCourseId;
+        const courseLocked = (courseOff || otherCourse) && !admin;
         const assistantKey = assistantCourseKey(course.id, course.title);
         const allModulesClosed = course.modules.every((m) => m.active === false);
         const practicalNumbers = new Map<string, number>();
@@ -578,6 +595,8 @@ export function CoursesLanding() {
               <p className="-mt-4 mb-6 text-sm text-destructive">{syncError.message}</p>
             )}
 
+            {edit && <CourseStudents courseId={course.id} />}
+
             {admin && (
               <div className="mb-4">
                 <Button size="sm" variant="outline" onClick={() => {
@@ -630,7 +649,7 @@ export function CoursesLanding() {
               </div>
             )}
 
-            {(course.viberUrl || course.knowledgeBaseUrl || edit) && !(courseOff && !admin) && (
+            {(course.viberUrl || course.knowledgeBaseUrl || edit) && !courseLocked && (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-soft">
                 <div className="flex min-w-0 flex-1 basis-80 items-center gap-3">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
@@ -667,7 +686,7 @@ export function CoursesLanding() {
               </div>
             )}
 
-            {!(courseOff && !admin) && (
+            {!courseLocked && (
               <CourseVideos
                 videos={course.videos ?? []}
                 edit={edit}
@@ -683,7 +702,7 @@ export function CoursesLanding() {
               />
             )}
 
-            {!(courseOff && !admin) && course.modules.length > 0 && (
+            {!courseLocked && course.modules.length > 0 && (
               <CourseResults
                 courseId={course.id}
                 modules={course.modules.map((m) => m.title)}
@@ -697,7 +716,7 @@ export function CoursesLanding() {
               />
             )}
 
-            {!(courseOff && !admin) && course.modules.length > 0 && (
+            {!courseLocked && course.modules.length > 0 && (
               <PracticalResults courseId={course.id} edit={admin} modules={course.modules.map((m) => m.title)} />
             )}
 
@@ -713,7 +732,7 @@ export function CoursesLanding() {
               <ol className="grid gap-4 md:grid-cols-2">
                 {course.modules.map((m, i) => {
                   const modOff = m.active === false;
-                  if (!admin && (courseOff || modOff))
+                  if (!admin && (courseLocked || modOff))
                     return (
                       <li
                         key={m.id}
@@ -736,7 +755,7 @@ export function CoursesLanding() {
                   <li
                     key={m.id}
                     className={`group flex flex-col rounded-2xl border border-border bg-card p-6 shadow-soft transition-shadow hover:shadow-lift ${
-                      modOff || courseOff ? "opacity-60" : ""
+                      modOff || courseLocked ? "opacity-60" : ""
                     }`}
                   >
                     <div className="flex items-start gap-3">
