@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import {
   requestRegistrationCode,
   verifyRegistrationCode,
@@ -58,6 +59,15 @@ export function RegistrationGate({
   const [refusal, setRefusal] = useState<Refusal | null>(null);
   const [checking, setChecking] = useState(true);
 
+  /**
+   * The parent passes an inline arrow, so `onReady` is a new function on every
+   * render. Keeping it in a ref stops the bootstrap effect from re-running and
+   * reopening the gate right after a successful registration.
+   */
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
+  const doneRef = useRef(false);
+
   const checkState = useServerFn(getRegistrationState);
   const askCode = useServerFn(requestRegistrationCode);
   const checkCode = useServerFn(verifyRegistrationCode);
@@ -65,24 +75,34 @@ export function RegistrationGate({
 
   /** A real Supabase session is required by the rest of the site. */
   const openSession = useCallback(
-    async (tokenHash: string) => {
-      const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "email" });
+    async (tokenHash: string, otpType: string) => {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: otpType as EmailOtpType,
+      });
       if (error) throw error;
     },
     [],
   );
 
   useEffect(() => {
+    if (doneRef.current) return;
     let alive = true;
     void (async () => {
       try {
         const state = await checkState({});
-        if (!alive) return;
+        if (!alive || doneRef.current) return;
         if (state.known) {
           // Known device: refresh the session silently, never ask for a code again.
           const fresh = await resume({});
-          if (fresh.ok) await openSession(fresh.tokenHash);
-          if (alive) onReady(fresh.ok ? (fresh.courseId ?? null) : null);
+          if (fresh.ok) {
+            await openSession(fresh.tokenHash, fresh.otpType);
+            if (alive) onReadyRef.current(fresh.courseId ?? null);
+            return;
+          }
+          // The binding exists but the session cannot be minted: do not trap the
+          // visitor behind the gate, just ask for a code again.
+          setOpen(true);
           return;
         }
         setOpen(true);
@@ -95,7 +115,9 @@ export function RegistrationGate({
     return () => {
       alive = false;
     };
-  }, [checkState, resume, openSession, onReady]);
+    // Runs once per mount on purpose: `onReady` is intentionally excluded.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkState, resume, openSession]);
 
   const activeCourses = courses.filter((c) => c.active !== false);
   const chosen = courses.find((c) => c.id === courseId);
@@ -137,16 +159,20 @@ export function RegistrationGate({
         setRefusal(result as Refusal);
         return;
       }
-      await openSession(result.tokenHash);
+      await openSession(result.tokenHash, result.otpType);
+      doneRef.current = true;
       setStep("done");
       setOpen(false);
-      onReady(courseId || null);
+      onReadyRef.current(courseId || null);
       toast.success("Вітаємо на курсі");
-    } catch {
+    } catch (e) {
       setRefusal({
         ok: false,
         reason: "invalid-code",
-        message: `Не вдалося відкрити сесію. Спробуйте ще раз або напишіть на ${CONTACT_EMAIL}.`,
+        message:
+          e instanceof Error && e.message
+            ? `Не вдалося відкрити сесію: ${e.message}. Спробуйте ще раз або напишіть на ${CONTACT_EMAIL}.`
+            : `Не вдалося відкрити сесію. Спробуйте ще раз або напишіть на ${CONTACT_EMAIL}.`,
       });
     } finally {
       setBusy(false);
@@ -188,7 +214,7 @@ export function RegistrationGate({
           </DialogDescription>
         </DialogHeader>
 
-        {step === "email" ? (
+        {step === "email" && (
           <form onSubmit={submitEmail} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="reg-name">Прізвище та ім'я</Label>
@@ -243,7 +269,9 @@ export function RegistrationGate({
               </Button>
             </DialogFooter>
           </form>
-        ) : (
+        )}
+
+        {step === "code" && (
           <form onSubmit={submitCode} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="reg-code">Код із шести цифр</Label>
